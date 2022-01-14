@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import pigpio
-
 # simple check to avoid going out of bounds on the servo
 def ceilingCheck(increment):
-	if increment > 500 and increment <= 2500:
+	if increment > -90 and increment <= 90:
 		return True
 	else:
 		return False
 
-def turnMotor(motor, pin, increment):
+def turnMotor(motor, increment):
 	if ceilingCheck(increment):
-		motor.set_servo_pulsewidth(pin, increment)
+		motor.angle = (increment)

@@ -1,70 +1,77 @@
 #!/usr/bin/env python
 
 import lib.carSetup as carSetup
-import lib.servoSetup as servo
-
-# pigpio for PWM to prevent servo jitters in software gpio
-import pigpio
+import lib.servoSetup as servoSetup
 
 # Keyboard imput from terminal suffers from limitations on Linux due to
-# permissions and udev. Using pygame as a non blockign method while not
+# permissions and udev. Using pygame as a non blocking method while not
 # requiring root
 
 ##### Create a new class for handling all this (seperate it) ##################################
 import pygame
 import pygame.camera
 
-pygame.init()
-pygame.camera.init()
+# setup pin factory for all devices
+from gpiozero.pins.pigpio import PiGPIOFactory
+from gpiozero import Device
+from gpiozero import AngularServo
 
-window = pygame.display.set_mode((640, 480))
-cam_list = pygame.camera.list_cameras()
-cam = pygame.camera.Camera(cam_list[0],(640,480))
-cam.start()
+Device.pin_factory = PiGPIOFactory()
+
+pygame.init()
+#pygame.camera.init()
+
+window = pygame.display.set_mode((40, 80))
+#cam_list = pygame.camera.list_cameras()
+#cam = pygame.camera.Camera(cam_list[0],(640,480))
+#cam.start()
 
 ##################################################
 
-# initialize the car
+# initialize the car and servo
 rcCar = carSetup.Car()
-rcCar.pinReset()
+servoLeftRight = AngularServo(12, min_angle=-90, max_angle=90)
+servoUpDown = AngularServo(5, min_angle=-90, max_angle=90)
 
-# initilize the motors
-rcServoMotor = pigpio.pi()
-leftRight    = 500;
-upDown       = 500;
+# Angular position starting point. Range -90 to +90
+leftRight    = 0;
+upDown       = 0;
 
 # switch from a while true loop
 while True:
 
 	########## move to camera class: getImage, transformImage methods, etc
-	image1 = cam.get_image()
-	image1 = pygame.transform.scale(image1,(640,480))
-	window.blit(image1,(0,0))
-	pygame.display.update()
+#	image1 = cam.get_image()
+#	image1 = pygame.transform.scale(image1,(640,480))
+#	window.blit(image1,(0,0))
+#	pygame.display.update()
 	###################################################################
 
 	for event in pygame.event.get():
 		if event.type == pygame.KEYUP:
-			rcCar.pinReset()
+			rcCar.stop()
 		if event.type == pygame.KEYDOWN:
-			print(event.key)
 			if event.key == pygame.K_w:
 				rcCar.moveForward()
-			if event.key == pygame.K_s:
+			elif event.key == pygame.K_s:
 				rcCar.moveBackwards()
-			if event.key == pygame.K_a:
+			elif event.key == pygame.K_a:
 				rcCar.turnLeft()
-			if event.key == pygame.K_d:
+			elif event.key == pygame.K_d:
 				rcCar.turnRight()
-			if event.key == pygame.K_LEFT:
-				increment += 300
-				servo.turnMotor(rcServoMotor, 12, leftRight)
-			if event.key == pygame.K_RIGHT:
-				increment -= 300
-				servo.turnMotor(rcServoMotor, 12, leftRight)
-			if event.key == pygame.K_UP:
-				increment += 300
-				servo.turnMotor(rcServoMotor, 5, upDown)
-			if event.key == pygame.K_DOWN:
-				increment -= 300
-				servo.turnMotor(rcServoMotor, 5, upDown)
+			elif event.key == pygame.K_LEFT:
+				leftRight += 10
+				servoSetup.turnMotor(servoLeftRight, leftRight)
+			elif event.key == pygame.K_RIGHT:
+				leftRight -= 10
+				servoSetup.turnMotor(servoLeftRight, leftRight)
+			elif event.key == pygame.K_UP:
+				upDown -= 10
+				servoSetup.turnMotor(servoUpDown, upDown)
+			elif event.key == pygame.K_DOWN:
+				upDown += 10
+				servoSetup.turnMotor(servoUpDown, upDown)
+			elif event.key == pygame.K_q:
+				# reset everything and exit
+				rcCar.stop()
+				#servo.turnMotor(rcServorMotor,5, 0)
