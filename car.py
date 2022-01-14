@@ -1,30 +1,26 @@
 #!/usr/bin/env python
-
 import lib.carSetup as carSetup
 import lib.servoSetup as servoSetup
+import lib.distanceSetup as distanceSetup
+import lib.piCamera as piCamera
 
 # Keyboard imput from terminal suffers from limitations on Linux due to
 # permissions and udev. Using pygame as a non blocking method while not
 # requiring root
 
-##### Create a new class for handling all this (seperate it) ##################################
 import pygame
 import pygame.camera
 
+# arguement parsing
+import argparse
+
 # setup pin factory for all devices
 from gpiozero.pins.pigpio import PiGPIOFactory
-from gpiozero import Device
-from gpiozero import AngularServo
+from gpiozero import Device, AngularServo, DistanceSensor
 
 Device.pin_factory = PiGPIOFactory()
 
-pygame.init()
-#pygame.camera.init()
-
-window = pygame.display.set_mode((40, 80))
-#cam_list = pygame.camera.list_cameras()
-#cam = pygame.camera.Camera(cam_list[0],(640,480))
-#cam.start()
+window, cam = piCamera.initialize()
 
 ##################################################
 
@@ -32,6 +28,9 @@ window = pygame.display.set_mode((40, 80))
 rcCar = carSetup.Car()
 servoLeftRight = AngularServo(12, min_angle=-90, max_angle=90)
 servoUpDown = AngularServo(5, min_angle=-90, max_angle=90)
+
+# initialize distance setting
+rcDistance = DistanceSensor(echo=4, trigger=27)
 
 # Angular position starting point. Range -90 to +90
 leftRight    = 0;
@@ -41,16 +40,15 @@ upDown       = 0;
 while True:
 
 	########## move to camera class: getImage, transformImage methods, etc
-#	image1 = cam.get_image()
-#	image1 = pygame.transform.scale(image1,(640,480))
-#	window.blit(image1,(0,0))
-#	pygame.display.update()
+	piCamera.updateWindow(cam, window)
 	###################################################################
 
 	for event in pygame.event.get():
 		if event.type == pygame.KEYUP:
 			rcCar.stop()
 		if event.type == pygame.KEYDOWN:
+			# get distance before executing a movement
+			distanceSetup.getDistance(rcDistance)
 			if event.key == pygame.K_w:
 				rcCar.moveForward()
 			elif event.key == pygame.K_s:
