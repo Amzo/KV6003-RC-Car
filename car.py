@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import lib.carSetup as carSetup
-import lib.distanceSetup as distanceSetup
 import lib.piCamera as piCamera
 import lib.controller as controller
 
