@@ -60,13 +60,13 @@ while True:
 			elif event.key == pygame.K_d:
 				rcCar.turnRight()
 			elif event.key == pygame.K_LEFT:
-                servoLeftRight.turnMotor(10)
+				servoLeftRight.turnMotor(10)
 			elif event.key == pygame.K_RIGHT:
 				servoLeftRight.turnMotor(-10)
 			elif event.key == pygame.K_UP:
-				servoUpDown(-10)
+				servoUpDown.turnMotor(-10)
 			elif event.key == pygame.K_DOWN:
-				servoUpDown(10)
+				servoUpDown.turnMotor(10)
 			elif event.key == pygame.K_q:
 				# reset everything and exit
 				rcCar.stop()
