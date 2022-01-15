@@ -5,7 +5,8 @@ import lib.controller as controller
 
 # Keyboard imput from terminal suffers from limitations on Linux due to
 # permissions and udev. Using pygame as a non blocking method while not
-# requiring root
+# requiring root, May as well make use of pygame.camera to avoid
+# any additional libraries being imported
 
 import pygame
 import pygame.camera
@@ -13,7 +14,7 @@ import pygame.camera
 # arguement parsing
 import argparse
 
-# setup pin factory for all devices
+# setup pin factory for all devices, default to pigpio to minimize stutter from software PWM
 from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero import Device, DistanceSensor
 
@@ -35,17 +36,23 @@ rcDistance = DistanceSensor(echo=4, trigger=27)
 # Add the arguments
 carParser = argparse.ArgumentParser()
 carParser = argparse.ArgumentParser(description='Flexible control for RC car')
-carParser.add_argument('-c', '--controller', metavar='controller', type=str, 
+
+carParser.add_argument('-c', '--controller', metavar='controller', type=str,
                        nargs=1, default='manual',
                        choices=['manual', 'a.i'],
                        help='Specify controller to use')
 
 
+carParser.add_argument('-d', '--data', metavar='data', type=bool,
+                       nargs=1, default=False,
+                       choices=[True, False],
+                       help='Set to true for collecting training data')
+
+
 args = carParser.parse_args()
 
-for arg in vars(args):
-    if getattr(args, arg) == 'manual':
-        controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance)
-    else:
-        controller.ai()
-    
+
+if args.controller == 'manual':
+    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, window, cam, args.data)
+else:
+    controller.ai()

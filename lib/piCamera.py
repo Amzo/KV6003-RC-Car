@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import pygame
+import cv2
+import csv
 
 def initialize():
 	pygame.init()
@@ -19,4 +21,14 @@ def updateWindow(cam, window):
 	window.blit(frame,(0,0))
 	pygame.display.update()
 
+def writeCSV(data):
+	with open("labels.csv", 'a', encoding='UTF8') as f:
+		writer = csv.writer(f)
+		writer.writerow(data)
 
+def dataCapture(cam, input, number):
+	csvData = ["image{}.jpg".format(number), input]
+	frame = cam.get_image()
+	data = pygame.surfarray.array2d(frame)
+	cv2.imwrite("~/Data/image{}.jpg".format(number), data)
+	writeCSV(csvData)
