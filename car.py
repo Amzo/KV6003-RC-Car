@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import lib.carSetup as carSetup
-import lib.servoSetup as servoSetup
 import lib.distanceSetup as distanceSetup
 import lib.piCamera as piCamera
 
@@ -26,20 +25,19 @@ window, cam = piCamera.initialize()
 
 # initialize the car and servo
 rcCar = carSetup.Car()
-servoLeftRight = AngularServo(12, min_angle=-90, max_angle=90)
-servoUpDown = AngularServo(5, min_angle=-90, max_angle=90)
+servoLeftRight = carSetup.Servo(12)
+servoUpDown = carSetup.Servo(5)
+
+#servoLeftRight = AngularServo(12, min_angle=-90, max_angle=90)
 
 # initialize distance setting
 rcDistance = DistanceSensor(echo=4, trigger=27)
-
-# Angular position starting point. Range -90 to +90
-leftRight    = 0;
-upDown       = 0;
 
 # Arguements
 parser = argparse.ArgumentParser(description='RC car startup options')
 parser.add_argument('-c','--capture', help='Capture keyboard input and frames for training', required=False)
 parser.add_argument('-a','--ai', help='Let the AI control the car', required=True)
+
 # switch from a while true loop
 while True:
 
@@ -62,17 +60,13 @@ while True:
 			elif event.key == pygame.K_d:
 				rcCar.turnRight()
 			elif event.key == pygame.K_LEFT:
-				leftRight += 10
-				servoSetup.turnMotor(servoLeftRight, leftRight)
+                servoLeftRight.turnMotor(10)
 			elif event.key == pygame.K_RIGHT:
-				leftRight -= 10
-				servoSetup.turnMotor(servoLeftRight, leftRight)
+				servoLeftRight.turnMotor(-10)
 			elif event.key == pygame.K_UP:
-				upDown -= 10
-				servoSetup.turnMotor(servoUpDown, upDown)
+				servoUpDown(-10)
 			elif event.key == pygame.K_DOWN:
-				upDown += 10
-				servoSetup.turnMotor(servoUpDown, upDown)
+				servoUpDown(10)
 			elif event.key == pygame.K_q:
 				# reset everything and exit
 				rcCar.stop()

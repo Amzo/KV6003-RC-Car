@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 try:
-	from gpiozero import Motor
+	from gpiozero import Motor, AngularServo
 except RuntimeError:
 	print("Error importing GPIO module")
 
@@ -42,3 +42,18 @@ class Car(Motor):
 		self.frontLeftWheel.stop()
 		self.rearRightWheel.stop()
 		self.rearLeftWheel.stop()
+
+class Servo(AngularServo):
+    def __init__(self, pin):
+        self.angle = 0;
+        self = AngularServo(pin, min_angle=-90, max_angle=90)
+        
+    def turnMotor(self, increment):
+        if self.ceilingCheck(increment):
+            self.angle = self.angle + increment
+            
+    def ceilingCheck(self, increment):
+        if self.angle + increment > -90 and self.angle  + increment<= 90:
+            True
+        else:
+            False
