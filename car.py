@@ -36,6 +36,10 @@ rcDistance = DistanceSensor(echo=4, trigger=27)
 leftRight    = 0;
 upDown       = 0;
 
+# Arguements
+parser = argparse.ArgumentParser(description='RC car startup options')
+parser.add_argument('-c','--capture', help='Capture keyboard input and frames for training', required=False)
+parser.add_argument('-a','--ai', help='Let the AI control the car', required=True)
 # switch from a while true loop
 while True:
 
