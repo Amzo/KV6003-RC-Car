@@ -8,10 +8,10 @@ import pygame
 import lib.distanceSetup as distanceSetup
 import lib.piCamera as piCamera
 
-def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, window, cam, dataCapture):
+def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataCapture):
 	imageNumber = 1;
 	while loop:
-		piCamera.updateWindow(cam, window)
+		piCamera.updateWindow()
 		for event in pygame.event.get():
 			if event.type == pygame.KEYUP:
 				rcCar.stop()
@@ -20,7 +20,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, window, cam, 
 				distanceSetup.getDistance(rcDistance)
 				if dataCapture:
 					print("Saving image {}".format(imageNumber))
-					piCamera.dataCapture(cam, event.key, imageNumber)
+					piCamera.dataCapture(event.key, imageNumber)
 					imageNumber += 1
 				if event.key == pygame.K_w:
  					rcCar.moveForward()

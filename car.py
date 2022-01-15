@@ -20,7 +20,7 @@ from gpiozero import Device, DistanceSensor
 
 Device.pin_factory = PiGPIOFactory()
 
-window, cam = piCamera.initialize()
+piCamera = piCamera.PiCamera()
 
 ##################################################
 
@@ -53,6 +53,6 @@ args = carParser.parse_args()
 
 
 if args.controller == 'manual':
-    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, window, cam, args.data)
+    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, args.data)
 else:
     controller.ai()
