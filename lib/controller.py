@@ -10,6 +10,15 @@ import lib.piCamera as piCamera
 
 def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataCapture):
 	imageNumber = 1;
+
+	# directionary of event.Key to their corresponding trees for easier logging of data to csv
+	inputKey = {
+		"119": 'w',
+		"97": 'a',
+		"115": 's',
+		"100": 'd'
+	}
+
 	while loop:
 		piCamera.updateWindow()
 		for event in pygame.event.get():
@@ -17,17 +26,17 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
 				rcCar.stop()
 			if event.type == pygame.KEYDOWN:
  				# get distance before executing a movement
-				distanceSetup.getDistance(rcDistance)
-				if dataCapture:
-					print("Saving image {}".format(imageNumber))
-					piCamera.dataCapture(event.key, imageNumber)
+				distance = distanceSetup.getDistance(rcDistance)
+				# only capture on asdw keys
+				if dataCapture and str(event.key) in inputKey and distance > 0:
+					piCamera.dataCapture(inputKey[str(event.key)], imageNumber, distance,  "Data/")
 					imageNumber += 1
 				if event.key == pygame.K_w:
- 					rcCar.moveForward()
+					rcCar.moveForward()
 				elif event.key == pygame.K_s:
-	 				rcCar.moveBackwards()
+					rcCar.moveBackwards()
 				elif event.key == pygame.K_a:
- 					rcCar.turnLeft()
+					rcCar.turnLeft()
 				elif event.key == pygame.K_d:
 					rcCar.turnRight()
 				elif event.key == pygame.K_LEFT:

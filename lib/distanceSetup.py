@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 
 def getDistance(sensor):
-	print('Distance: ', sensor.distance * 100)
+	return (sensor.distance * 100)
