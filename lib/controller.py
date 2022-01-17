@@ -5,12 +5,15 @@ Created on Sat Jan 15 08:35:01 2022
 @author: Anthony Donnelly
 """
 import pygame
-import lib.distanceSetup as distanceSetup
 import lib.piCamera as piCamera
+import lib.directory as dir
 
 def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataCapture):
-	imageNumber = 1;
-
+	if dir.is_empty("Data/"):
+		imageNumber = 1
+	else:
+		imageNumber = (dir.get_image_num("Data/") + 1)
+		print(imageNumber)
 	# directionary of event.Key to their corresponding trees for easier logging of data to csv
 	inputKey = {
 		"119": 'w',
@@ -20,33 +23,33 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
 	}
 
 	while loop:
-		piCamera.updateWindow()
+		piCamera.update_window()
 		for event in pygame.event.get():
 			if event.type == pygame.KEYUP:
 				rcCar.stop()
 			if event.type == pygame.KEYDOWN:
  				# get distance before executing a movement
-				distance = distanceSetup.getDistance(rcDistance)
+				distance = rcDistance.distance * 100
 				# only capture on asdw keys
 				if dataCapture and str(event.key) in inputKey and distance > 0:
-					piCamera.dataCapture(inputKey[str(event.key)], imageNumber, distance,  "Data/")
+					piCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  "Data/")
 					imageNumber += 1
 				if event.key == pygame.K_w:
-					rcCar.moveForward()
+					rcCar.move_forward()
 				elif event.key == pygame.K_s:
-					rcCar.moveBackwards()
+					rcCar.move_backwards()
 				elif event.key == pygame.K_a:
-					rcCar.turnLeft()
+					rcCar.turn_left()
 				elif event.key == pygame.K_d:
-					rcCar.turnRight()
+					rcCar.turn_right()
 				elif event.key == pygame.K_LEFT:
-					servoLeftRight.turnMotor(10)
+					servoLeftRight.turn_motor(10)
 				elif event.key == pygame.K_RIGHT:
-					servoLeftRight.turnMotor(-10)
+					servoLeftRight.turn_motor(-10)
 				elif event.key == pygame.K_UP:
-					servoUpDown.turnMotor(-10)
+					servoUpDown.turn_otor(-10)
 				elif event.key == pygame.K_DOWN:
-					servoUpDown.turnMotor(10)
+					servoUpDown.turn_otor(10)
 				elif event.key == pygame.K_q:
 					# reset everything and exit
 					rcCar.stop()
