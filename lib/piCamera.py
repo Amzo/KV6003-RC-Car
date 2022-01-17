@@ -37,6 +37,14 @@ class PiCamera():
 
 		self.imageFrame = surface3D
 
+	def get_image(self):
+		self.imageFrame = pygame.surface.Surface((640, 480),0,self.window)
+		self.process_surface_image()
+
+                # resize and convert to grey scale
+		self.image_resize()
+		self.transform_grey_scale()
+
 	def data_capture(self, input, number, distance, directory):
 		self.imageFrame = pygame.surface.Surface((640, 480),0,self.window)
 		self.process_surface_image()
@@ -64,3 +72,7 @@ class PiCamera():
 
 	def transform_grey_scale(self):
 		self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_BGR2GRAY)
+
+	def close(self):
+		self.cam.stop()
+		pygame.quit()

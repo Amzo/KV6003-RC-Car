@@ -39,7 +39,7 @@ carParser = argparse.ArgumentParser(description='Flexible control for RC car')
 
 carParser.add_argument('-c', '--controller', metavar='controller', type=str,
                        nargs=1, default='manual',
-                       choices=['manual', 'a.i'],
+                       choices=['manual', 'ai'],
                        help='Specify controller to use')
 
 
@@ -55,4 +55,4 @@ args = carParser.parse_args()
 if args.controller == 'manual':
     controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, args.data)
 else:
-    controller.ai()
+    controller.ai(True, rcCar, rcDistance, piCamera)

@@ -7,10 +7,11 @@ except RuntimeError:
 
 class Car(Motor):
 	def __init__(self):
-		self.rearLeftWheel = Motor(26, 19)
-		self.frontRightWheel = Motor(23, 24)
-		self.frontLeftWheel = Motor(6, 13)
-		self.rearRightWheel = Motor(7, 16)
+		# keep pwm disabled for now as we have no need for it
+		self.rearLeftWheel = Motor(26, 19, pwm=False)
+		self.frontRightWheel = Motor(23, 24, pwm=False)
+		self.frontLeftWheel = Motor(6, 13, pwm=False)
+		self.rearRightWheel = Motor(7, 16, pwm=False)
 
 	def move_forward(self):
 		self.frontRightWheel.forward()
@@ -37,7 +38,7 @@ class Car(Motor):
 		self.rearRightWheel.backward()
 		self.rearLeftWheel.forward()
 
-	def stop(self):
+	def close(self):
 		self.frontRightWheel.stop()
 		self.frontLeftWheel.stop()
 		self.rearRightWheel.stop()

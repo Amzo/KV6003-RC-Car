@@ -7,7 +7,7 @@ def is_empty(directory):
 	else:
 		return False
 
-def dir_exists():
+def dir_exists(directory):
 	if os.path.exists(directory):
 		return True
 	else:
