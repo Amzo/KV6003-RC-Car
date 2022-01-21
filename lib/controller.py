@@ -8,23 +8,27 @@ import pygame
 import lib.piCamera as piCamera
 import lib.directory as dir
 import lib.trainedModel as  models
+import time
 
 def ai(loop, rcCar, rcDistance, piCamera):
 	model = models.load_model('models', 'model.tflite')
 
 	while loop:
+		time.sleep(0.5)
 		piCamera.update_window()
 		piCamera.get_image()
 		aiKey =  models.get_prediction(model, piCamera.imageFrame, rcDistance.distance * 100)
 
-		if ai.key == "w":
+		if aiKey == "w":
 			rcCar.move_forward()
-		elif ai.key == "a":
+		elif aiKey == "a":
 			rcCar.turn_left()
-		elif ai.key == "d":
+		elif aiKey == "d":
 			rcCar.turn_right()
+		elif aiKey == "s":
+			rcCar.move_backwards()
 		else:
-			rcCAr.move_backwards()
+			rcCar.close()
 
 def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataCapture):
 	if dir.is_empty("Data/"):

@@ -7,7 +7,9 @@ class PiCamera():
 		pygame.init()
 		pygame.camera.init('OpenCV')
 		self.imageFrame = None
-		self.resizeDims = (200, 100)
+
+		# Confused me for awhile numpy uses (height, width) while CV2 uses (width, height)
+		self.resizeDims = (100, 200)
 
 		self.window = pygame.display.set_mode((640, 480))
 		camList = pygame.camera.list_cameras()
@@ -31,10 +33,12 @@ class PiCamera():
 
 		# convert to 3D array for numpy
 		surface3D = pygame.surfarray.array3d(self.imageFrame)
-		surface3D = numpy.swapaxes(surface3D, 0, 1)
+		#surface3D = numpy.transpose(surface3D, 0, 1)
 
-		surface3D = cv2.cvtColor(surface3D, cv2.COLOR_RGB2BGR)
+#		print(surface3D.shape)
+#		surface3D = cv2.cvtColor(surface3D, cv2.COLOR_RGB2BGR)
 
+#		print(surface3D.shape)
 		self.imageFrame = surface3D
 
 	def get_image(self):
@@ -42,8 +46,9 @@ class PiCamera():
 		self.process_surface_image()
 
                 # resize and convert to grey scale
-		self.image_resize()
 		self.transform_grey_scale()
+
+		self.image_resize()
 
 	def data_capture(self, input, number, distance, directory):
 		self.imageFrame = pygame.surface.Surface((640, 480),0,self.window)
@@ -68,10 +73,10 @@ class PiCamera():
 
 	# resize and transform on capture to allow using high resolution for viewing cam stream in window still
 	def image_resize(self):
-		self.imageFrame = cv2.resize(self.imageFrame, self.resizeDims, interpolation = cv2.INTER_AREA)
+		self.imageFrame = cv2.resize(self.imageFrame, self.resizeDims)
 
 	def transform_grey_scale(self):
-		self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_BGR2GRAY)
+		self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_RGB2GRAY)
 
 	def close(self):
 		self.cam.stop()
