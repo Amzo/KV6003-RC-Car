@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 from tflite_runtime.interpreter import Interpreter
@@ -7,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 
 import numpy as np
 import os
+from PIL import Image
 
 def load_model(path, file):
 	interpreter = Interpreter(os.path.join(path, file))
@@ -26,13 +26,13 @@ def get_prediction(model, image, distance):
 
 	image = image / 255
 	distance = distance / 100
-	image = np.expand_dims(image, axis=-1)
 
-	image = np.swapaxes(image, 0, 2)
-	#img = np.append(image, distance)
-	#print(np.float32(img))
-
-	#print(img.shape)
+#	im = Image.fromarray(np.uint8(image*255))
+#	im.show()
+#	print(image.shape)
+	
+#	quit()
+	image = image[np.newaxis, :, :, np.newaxis]
 	model.set_tensor(inputDetails[0]['index'], np.float32(image))
 	model.invoke()
 

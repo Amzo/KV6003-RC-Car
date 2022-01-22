@@ -16,7 +16,7 @@ def dir_exists(directory):
 
 # Return last file number. As all files are saved as 'imageXXX.jpg' glob and max is fine
 def get_image_num(directory):
-	with open("Data/labels.csv", 'r') as file:
+	with open(directory + "labels.csv", 'r') as file:
 		data = file.readlines()
 
 	lastImage = data[-1].split(',')[0]

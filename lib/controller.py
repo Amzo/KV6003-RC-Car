@@ -8,13 +8,13 @@ import pygame
 import lib.piCamera as piCamera
 import lib.directory as dir
 import lib.trainedModel as  models
-import time
+import time, os
 
 def ai(loop, rcCar, rcDistance, piCamera):
 	model = models.load_model('models', 'model.tflite')
 
 	while loop:
-		time.sleep(0.5)
+		time.sleep(0.2)
 		piCamera.update_window()
 		piCamera.get_image()
 		aiKey =  models.get_prediction(model, piCamera.imageFrame, rcDistance.distance * 100)
@@ -30,12 +30,22 @@ def ai(loop, rcCar, rcDistance, piCamera):
 		else:
 			rcCar.close()
 
-def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataCapture):
-	if dir.is_empty("Data/"):
+		for event in pygame.event.get():
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_q:
+					rcCar.close()
+					loop = False
+
+def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataArgs):
+	if not dir.dir_exists(dataArgs.output[0]):
+		os.makedirs(dataArgs.output[0])
+
+	if dir.is_empty(dataArgs.output[0]):
 		imageNumber = 1
 	else:
-		imageNumber = (dir.get_image_num("Data/") + 1)
+		imageNumber = (dir.get_image_num(dataArgs.output[0]) + 1)
 		print(imageNumber)
+
 	# directionary of event.Key to their corresponding trees for easier logging of data to csv
 	inputKey = {
 		"119": 'w',
@@ -53,8 +63,8 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
  				# get distance before executing a movement
 				distance = rcDistance.distance * 100
 				# only capture on asdw keys
-				if dataCapture and str(event.key) in inputKey and distance > 0:
-					piCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  "Data/")
+				if dataArgs.data[0] and str(event.key) in inputKey and distance > 0:
+					piCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  dataArgs.output[0])
 					imageNumber += 1
 				if event.key == pygame.K_w:
 					rcCar.move_forward()

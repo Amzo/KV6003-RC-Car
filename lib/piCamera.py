@@ -8,8 +8,7 @@ class PiCamera():
 		pygame.camera.init('OpenCV')
 		self.imageFrame = None
 
-		# Confused me for awhile numpy uses (height, width) while CV2 uses (width, height)
-		self.resizeDims = (100, 200)
+		self.resizeDims = (200, 100)
 
 		self.window = pygame.display.set_mode((640, 480))
 		camList = pygame.camera.list_cameras()
@@ -23,8 +22,8 @@ class PiCamera():
 		self.window.blit(frame,(0,0))
 		pygame.display.update()
 
-	def write_csv(self, data):
-		with open("Data/labels.csv", 'a', encoding='UTF8') as f:
+	def write_csv(self, data, dir):
+		with open(dir + "labels.csv", 'a', encoding='UTF8') as f:
 			writer = csv.writer(f)
 			writer.writerow(data)
 
@@ -33,7 +32,7 @@ class PiCamera():
 
 		# convert to 3D array for numpy
 		surface3D = pygame.surfarray.array3d(self.imageFrame)
-		#surface3D = numpy.transpose(surface3D, 0, 1)
+		surface3D = numpy.swapaxes(surface3D, 1, 0)
 
 #		print(surface3D.shape)
 #		surface3D = cv2.cvtColor(surface3D, cv2.COLOR_RGB2BGR)
@@ -62,14 +61,11 @@ class PiCamera():
 
 		self.image_resize()
 
-		if not dir.dir_exists(directory):
-			os.makedirs(directory)
-
 		saveFile = directory + 'image{}.jpg'.format(number)
 		print("saving file to {}".format(saveFile))
 		cv2.imwrite(saveFile, self.imageFrame)
 
-		self.write_csv(csvData)
+		self.write_csv(csvData, directory)
 
 	# resize and transform on capture to allow using high resolution for viewing cam stream in window still
 	def image_resize(self):

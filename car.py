@@ -20,8 +20,6 @@ from gpiozero import Device, DistanceSensor
 
 Device.pin_factory = PiGPIOFactory()
 
-piCamera = piCamera.PiCamera()
-
 ##################################################
 
 # initialize the car and servo
@@ -48,11 +46,25 @@ carParser.add_argument('-d', '--data', metavar='data', type=bool,
                        choices=[True, False],
                        help='Set to true for collecting training data')
 
+carParser.add_argument('-o', '--output', metavar='output', type=str,
+                       nargs=1, default="~/Data/Train/",
+                       help="Specify output directory for data collection")
+
 
 args = carParser.parse_args()
 
-
-if args.controller == 'manual':
-    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, args.data)
+try:
+    args.controller[0]
+except NameError:
+    carParser.print_help()
+    quit(0)
 else:
+    piCamera = piCamera.PiCamera()
+
+if args.controller[0] == 'manual' and piCamera is not None:
+    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, args)
+elif args.controller[0] == 'ai' and piCamera is not None:
     controller.ai(True, rcCar, rcDistance, piCamera)
+else:
+    carParser.print_help()
+    quit(0)
