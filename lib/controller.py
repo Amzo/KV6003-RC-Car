@@ -5,19 +5,18 @@ Created on Sat Jan 15 08:35:01 2022
 @author: Anthony Donnelly
 """
 import pygame
-import lib.piCamera as piCamera
+import lib.cameraModule as cameraModule
 import lib.directory as dir
 import lib.trainedModel as  models
 import time, os
 
-def ai(loop, rcCar, rcDistance, piCamera):
+def ai(loop, rcCar, rcDistance, carCamera):
 	model = models.load_model('models', 'model.tflite')
 
 	while loop:
-		time.sleep(0.2)
 		piCamera.update_window()
 		piCamera.get_image()
-		aiKey =  models.get_prediction(model, piCamera.imageFrame, rcDistance.distance * 100)
+		aiKey =  models.get_prediction(model, carCamera.imageFrame, rcDistance.distance * 100)
 
 		if aiKey == "w":
 			rcCar.move_forward()
@@ -30,13 +29,18 @@ def ai(loop, rcCar, rcDistance, piCamera):
 		else:
 			rcCar.close()
 
+		# Don't want it to predict in real time, slow it down a few seconds
+		time.sleep(0.5)
+		rcCar.close()
+
 		for event in pygame.event.get():
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_q:
 					rcCar.close()
+					piCamera.close()
 					loop = False
 
-def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dataArgs):
+def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, dataArgs):
 	if not dir.dir_exists(dataArgs.output[0]):
 		os.makedirs(dataArgs.output[0])
 
@@ -55,7 +59,6 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
 	}
 
 	while loop:
-		piCamera.update_window()
 		for event in pygame.event.get():
 			if event.type == pygame.KEYUP:
 				rcCar.close()
@@ -64,7 +67,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
 				distance = rcDistance.distance * 100
 				# only capture on asdw keys
 				if dataArgs.data[0] and str(event.key) in inputKey and distance > 0:
-					piCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  dataArgs.output[0])
+					carCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  dataArgs.output[0])
 					imageNumber += 1
 				if event.key == pygame.K_w:
 					rcCar.move_forward()
@@ -85,5 +88,5 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, dat
 				elif event.key == pygame.K_q:
 					# reset everything and exit
 					rcCar.close()
-					piCamera.close()
+					carCamera.close()
 					loop = False;

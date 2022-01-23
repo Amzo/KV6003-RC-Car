@@ -39,10 +39,15 @@ class Car(Motor):
 		self.rearLeftWheel.forward()
 
 	def close(self):
-		self.frontRightWheel.stop()
-		self.frontLeftWheel.stop()
-		self.rearRightWheel.stop()
-		self.rearLeftWheel.stop()
+		try:
+			self.frontRightWheel.stop()
+		except:
+			# WE close the devices our selves, prevent gpio zero error from trying to close the already closed devices
+			pass
+		else:
+			self.frontLeftWheel.stop()
+			self.rearRightWheel.stop()
+			self.rearLeftWheel.stop()
 
 class Servo(AngularServo):
 	def __init__(self, pin):

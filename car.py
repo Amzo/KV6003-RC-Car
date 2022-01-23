@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import lib.carSetup as carSetup
-import lib.piCamera as piCamera
+import lib.cameraModule as cameraModule
 import lib.controller as controller
 
 # Keyboard imput from terminal suffers from limitations on Linux due to
@@ -47,7 +47,7 @@ carParser.add_argument('-d', '--data', metavar='data', type=bool,
                        help='Set to true for collecting training data')
 
 carParser.add_argument('-o', '--output', metavar='output', type=str,
-                       nargs=1, default="~/Data/Train/",
+                       nargs=1, default="/home/pi/Data/Train/",
                        help="Specify output directory for data collection")
 
 
@@ -59,12 +59,14 @@ except NameError:
     carParser.print_help()
     quit(0)
 else:
-    piCamera = piCamera.PiCamera()
+   # initialize the camera and run in it's own thread
+    carCamera = cameraModule.carCamera()
+    carCamera.run()
 
-if args.controller[0] == 'manual' and piCamera is not None:
-    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, piCamera, args)
-elif args.controller[0] == 'ai' and piCamera is not None:
-    controller.ai(True, rcCar, rcDistance, piCamera)
+if args.controller[0] == 'manual' and carCamera is not None:
+    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
+elif args.controller[0] == 'ai' and carCamera is not None:
+    controller.ai(True, rcCar, rcDistance, carCamera)
 else:
     carParser.print_help()
     quit(0)
