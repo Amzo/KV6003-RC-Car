@@ -5,13 +5,11 @@ import lib.controller as controller
 
 # Keyboard imput from terminal suffers from limitations on Linux due to
 # permissions and udev. Using pygame as a non blocking method while not
-# requiring root, May as well make use of pygame.camera to avoid
-# any additional libraries being imported
+# requiring root
 
 import pygame
-import pygame.camera
 
-# arguement parsing
+# argument parsing
 import argparse
 
 # setup pin factory for all devices, default to pigpio to minimize stutter from software PWM
@@ -29,7 +27,6 @@ servoUpDown = carSetup.Servo(5)
 
 # initialize distance setting
 rcDistance = DistanceSensor(echo=4, trigger=27)
-
 
 # Add the arguments
 carParser = argparse.ArgumentParser()

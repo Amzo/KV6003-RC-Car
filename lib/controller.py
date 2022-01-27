@@ -48,9 +48,8 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 		imageNumber = 1
 	else:
 		imageNumber = (dir.get_image_num(dataArgs.output[0]) + 1)
-		print(imageNumber)
 
-	# directionary of event.Key to their corresponding trees for easier logging of data to csv
+	# dictionary of event.Key to their corresponding keys for easier logging of data to csv
 	inputKey = {
 		"119": 'w',
 		"97": 'a',
@@ -61,7 +60,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 	while loop:
 		for event in pygame.event.get():
 			if event.type == pygame.KEYUP:
-				rcCar.close()
+				rcCar.release()
 			if event.type == pygame.KEYDOWN:
  				# get distance before executing a movement
 				distance = rcDistance.distance * 100
@@ -87,6 +86,6 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 					servoUpDown.turn_motor(10)
 				elif event.key == pygame.K_q:
 					# reset everything and exit
-					rcCar.close()
+					rcCar.release()
 					carCamera.close()
 					loop = False;

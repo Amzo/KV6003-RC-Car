@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 try:
 	from gpiozero import Motor, AngularServo
 except RuntimeError:
@@ -38,7 +39,7 @@ class Car(Motor):
 		self.rearRightWheel.backward()
 		self.rearLeftWheel.forward()
 
-	def close(self):
+	def release(self):
 		try:
 			self.frontRightWheel.stop()
 		except:
