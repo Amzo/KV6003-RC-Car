@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 
 import time
+
 try:
 	from gpiozero import Motor, AngularServo
 except RuntimeError:
 	print("Error importing GPIO module")
 
-class Car(Motor):
+class Car():
 	def __init__(self):
 		# keep pwm disabled for now as we have no need for it
-		self.rearLeftWheel = Motor(26, 19, pwm=False)
-		self.frontRightWheel = Motor(23, 24, pwm=False)
-		self.frontLeftWheel = Motor(6, 13, pwm=False)
-		self.rearRightWheel = Motor(7, 16, pwm=False)
+		self.rearLeftWheel = Motor(26, 19)
+		self.frontRightWheel = Motor(23, 24)
+		self.frontLeftWheel = Motor(6, 13)
+		self.rearRightWheel = Motor(7, 16)
 
 	def move_forward(self):
-		self.frontRightWheel.forward()
-		self.frontLeftWheel.forward()
-		self.rearRightWheel.forward()
-		self.rearLeftWheel.forward()
+		self.frontRightWheel.forward(1)
+		self.frontLeftWheel.forward(1)
+		self.rearRightWheel.forward(1)
+		self.rearLeftWheel.forward(1)
 
 	def move_backwards(self):
 		self.frontRightWheel.backward()
@@ -40,15 +41,15 @@ class Car(Motor):
 		self.rearLeftWheel.forward()
 
 	def release(self):
-		try:
-			self.frontRightWheel.stop()
-		except:
-			# WE close the devices our selves, prevent gpio zero error from trying to close the already closed devices
-			pass
-		else:
-			self.frontLeftWheel.stop()
-			self.rearRightWheel.stop()
-			self.rearLeftWheel.stop()
+#		try:
+		self.frontRightWheel.stop()
+#		except:
+#			# WE close the devices our selves, prevent gpio zero error from trying to close the already closed devices
+#			pass
+#		else:
+		self.frontLeftWheel.stop()
+		self.rearRightWheel.stop()
+		self.rearLeftWheel.stop()
 
 class Servo(AngularServo):
 	def __init__(self, pin):

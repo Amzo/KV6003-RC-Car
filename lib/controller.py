@@ -8,6 +8,7 @@ import pygame
 import lib.cameraModule as cameraModule
 import lib.directory as dir
 import lib.trainedModel as  models
+import gpiozero
 import time, os
 
 def ai(loop, rcCar, rcDistance, carCamera):
@@ -58,6 +59,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 	}
 
 	while loop:
+		carCamera.update_window()
 		for event in pygame.event.get():
 			if event.type == pygame.KEYUP:
 				rcCar.release()
@@ -65,9 +67,11 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
  				# get distance before executing a movement
 				distance = rcDistance.distance * 100
 				# only capture on asdw keys
+
 				if dataArgs.data[0] and str(event.key) in inputKey and distance > 0:
 					carCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  dataArgs.output[0])
 					imageNumber += 1
+
 				if event.key == pygame.K_w:
 					rcCar.move_forward()
 				elif event.key == pygame.K_s:
@@ -87,5 +91,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 				elif event.key == pygame.K_q:
 					# reset everything and exit
 					rcCar.release()
-					carCamera.close()
+					carCamera.release()
 					loop = False;
+				else:
+					pygame.event.clear()

@@ -1,8 +1,6 @@
 ##!/usr/bin/env python3
-import pygame, cv2, csv, numpy, os
-import lib.directory as dir
+import pygame, cv2, csv
 import picamera, io
-from multiprocessing.pool import ThreadPool
 import threading
 
 class carCamera():
@@ -16,9 +14,13 @@ class carCamera():
 		self.window = pygame.display.set_mode((640, 480))
 		self.loopFlag = True
 
-	def run(self):
-		pool = ThreadPool(processes=1)
-		pool.apply_async(self.update_window, args=())
+		self.cameraThread = None
+
+	def start(self):
+		self.cameraThread = threading.Thread(target=self.update_window, args=(), daemon=True)
+		self.cameraThread.start()
+		#pool = ThreadPool(processes=1)
+		#pool.apply_async(self.update_window, args=())
 
 	def update_window(self):
 		x = (self.window.get_width() - self.camera.resolution[0]) / 2
@@ -26,39 +28,24 @@ class carCamera():
 
 		rgb = bytearray(self.camera.resolution[0] * self.camera.resolution[1] * 3)
 
-		# Main loop
-		while(self.loopFlag):
-			stream = io.BytesIO()
-			self.camera.capture(stream, use_video_port=True, format='rgb')
-			stream.seek(0)
-			stream.readinto(rgb)
-			stream.close()
+		stream = io.BytesIO()
+		self.camera.capture(stream, use_video_port=True, format='rgb')
+		stream.seek(0)
+		stream.readinto(rgb)
+		stream.close()
 
-			img = pygame.image.frombuffer(rgb[0:(self.camera.resolution[0] * self.camera.resolution[1] * 3)], self.camera.resolution, 'RGB')
-			self.window.fill(0)
+		img = pygame.image.frombuffer(rgb[0:(self.camera.resolution[0] * self.camera.resolution[1] * 3)], self.camera.resolution, 'RGB')
+		self.window.fill(0)
 
-			if img:
-				self.window.blit(img, (x,y))
+		if img:
+			self.window.blit(img, (x,y))
 
-			pygame.display.update()
+		pygame.display.update()
 
-	def write_csv(self, data, dir):
-		with open(dir + "labels.csv", 'a', encoding='UTF8') as f:
+	def write_csv(self, data, directory):
+		with open(directory + "labels.csv", 'a', encoding='UTF8') as f:
 			writer = csv.writer(f)
 			writer.writerow(data)
-
-	def process_surface_image(self):
-		self.imageFrame = self.cam.get_image()
-
-		# convert to 3D array for numpy
-		surface3D = pygame.surfarray.array3d(self.imageFrame)
-		surface3D = numpy.swapaxes(surface3D, 1, 0)
-
-#		print(surface3D.shape)
-#		surface3D = cv2.cvtColor(surface3D, cv2.COLOR_RGB2BGR)
-
-#		print(surface3D.shape)
-		self.imageFrame = surface3D
 
 	def get_image(self):
 		self.imageFrame = pygame.surface.Surface((640, 480),0,self.window)
@@ -83,6 +70,7 @@ class carCamera():
 	def transform_grey_scale(self):
 		self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_RGB2GRAY)
 
-	def close(self):
+	def release(self):
 		self.loopFlag = False
+		self.camera.close()
 		pygame.quit()
