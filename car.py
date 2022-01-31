@@ -2,12 +2,7 @@
 import lib.carSetup as carSetup
 import lib.cameraModule as cameraModule
 import lib.controller as controller
-
-# Keyboard imput from terminal suffers from limitations on Linux due to
-# permissions and udev. Using pygame as a non blocking method while not
-# requiring root
-
-import pygame
+import lib.network as network
 
 # argument parsing
 import argparse
@@ -17,6 +12,12 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero import Device, DistanceSensor
 
 Device.pin_factory = PiGPIOFactory()
+
+# configuation parsing
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config/config.ini')
 
 ##################################################
 
@@ -51,19 +52,25 @@ carParser.add_argument('-o', '--output', metavar='output', type=str,
 args = carParser.parse_args()
 
 try:
-    args.controller[0]
+	args.controller[0]
 except NameError:
-    carParser.print_help()
-    quit(0)
+	carParser.print_help()
+	# return 1 for error on unix just good practice
+	quit(1)
 else:
-   # initialize the camera and run in it's own thread
-    carCamera = cameraModule.carCamera()
-    carCamera.run()
-
-if args.controller[0] == 'manual' and carCamera is not None:
-    controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
-elif args.controller[0] == 'ai' and carCamera is not None:
-    controller.ai(True, rcCar, rcDistance, carCamera)
-else:
-    carParser.print_help()
-    quit(0)
+	if args.controller[0] == 'manual':
+		try:
+			carCamera = cameraModule.carCamera()
+		except:
+			print("Issues initializing pi camera")
+		finally:
+			controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
+	elif args.controller[0] == 'ai':
+		# stream video remotely to reduce pi load
+		streamConnection = network.Server(config['host']['serverName'], int(config['port']['Port']))
+		print("Starting video streaming server")
+		streamConnection.start()
+		controller.ai(True, rcCar, rcDistance)
+	else:
+		carParser.print_help()
+		quit(1)

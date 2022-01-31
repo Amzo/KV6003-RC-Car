@@ -9,58 +9,61 @@ Created on Sat Jan 29 07:44:50 2022
 import socket, picamera, time, struct, sys, io
 import threading
 
-# faster video streaming from piCamera documentation
-class SplitFrames(object):
-	def __init__(self, connection):
-		self.connection = connection
-		self.stream = io.BytesIO()
-		self.count = 0
-
-	def write(self, buf):
-		if buf.startswith(b'\xff\xd8'):
-			# Start of new frame; send the old one's length
-			# then the data
-			size = self.stream.tell()
-			if size > 0:
-				self.connection.write(struct.pack('<L', size))
-				self.connection.flush()
-				self.stream.seek(0)
-				self.connection.write(self.stream.read(size))
-				self.count += 1
-				self.stream.seek(0)
-
-			self.stream.write(buf)
-
 class Server(object):
 	def __init__(self, host, port):
 		self.host = host
 		self.port = port
 
-		self.client_socket = socket.socket()
-		self.client_socket.connect((self.host, self.port))
-		self.connection = self.client_socket.makefile('wb')
+		self.serverSocket = socket.socket()
+		self.serverSocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)
+		print("binding socket to ", self.host, self.port)
+		self.serverSocket.bind((self.host, self.port))
+		print("Listening for connections")
+		self.serverSocket.listen(1)
 
-	def start(self, res):
-		self.videoThread = threading.Thread(target=self.videoStream, args=(res), daemon=True)
+
+	def start(self):
+		self.videoThread = threading.Thread(target=self.videoStream, args=(), daemon=True)
 		self.videoThread.start()
-		
-	def videoStream(self, res):
+
+	def videoStream(self):
 		try:
-			streamOutput = SplitFrames(self.connection)
+			print("Waiting for Connection")
+			self.connection,self.client_address = self.serverSocket.accept()
+			self.connection=self.connection.makefile('wb')
+		except:
+			pass
 
-			with picamera.PiCamera(resolution=res, framerate=30) as camera:
-				time.sleep(2)
+		print("Closing server socket")
+		self.serverSocket.close()
+
+		try:
+			with picamera.PiCamera() as camera:
+				camera.resolution = (640,480)      # pi camera resolution
+				camera.framerate = 15               # 15 frames/sec
+				time.sleep(2)                       # give 2 secs for camera to initilize
 				start = time.time()
-				camera.start_recording(streamOutput, format='mjpeg')
-				camera.wait_recording(sys.maxint)
-				camera.stop_recording()
+				stream = io.BytesIO()
+                # send jpeg format video stream
+				print ("Start transmit ... ")
 
-				# Write the terminating 0-length to the connection to let the
-				#server know we're done
-				self.connection.write(struct.pack('<L', 0))
-		finally:
-			finish = time.time()
-			print('Sent %d images in %d seconds at %.2ffps' % (
-			streamOutput.count, finish-start, streamOutput.count / (finish-start)))
-			self.connection.close()
-			self.client_socket.close()
+				for image in camera.capture_continuous(stream, 'jpeg', use_video_port = True):
+					try:
+						self.connection.flush()
+						stream.seek(0)
+						b = stream.read()
+						length=len(b)
+						if length >5120000:
+							continue
+						lengthBin = struct.pack('L', length)
+						self.connection.write(lengthBin)
+						self.connection.write(b)
+						stream.seek(0)
+						stream.truncate()
+					except Exception as e:
+						print(e)
+						print ("End transmit ... " )
+						break
+		except:
+            #print "Camera unintall"
+			pass

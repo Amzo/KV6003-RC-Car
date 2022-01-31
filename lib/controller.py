@@ -11,35 +11,35 @@ import lib.trainedModel as  models
 import gpiozero
 import time, os
 
-def ai(loop, rcCar, rcDistance, carCamera):
-	model = models.load_model('models', 'model.tflite')
+def ai(loop, rcCar, rcDistance):
+#	model = models.load_model('models', 'model.tflite')
 
 	while loop:
-		piCamera.update_window()
-		piCamera.get_image()
-		aiKey =  models.get_prediction(model, carCamera.imageFrame, rcDistance.distance * 100)
+#		piCamera.update_window()
+#		piCamera.get_image()
+#		aiKey =  models.get_prediction(model, carCamera.imageFrame, rcDistance.distance * 100)
 
-		if aiKey == "w":
-			rcCar.move_forward()
-		elif aiKey == "a":
-			rcCar.turn_left()
-		elif aiKey == "d":
-			rcCar.turn_right()
-		elif aiKey == "s":
-			rcCar.move_backwards()
-		else:
-			rcCar.close()
+#		if aiKey == "w":
+#			rcCar.move_forward()
+#		elif aiKey == "a":
+#			rcCar.turn_left()
+#		elif aiKey == "d":
+#			rcCar.turn_right()
+#		elif aiKey == "s":
+#			rcCar.move_backwards()
+#		else:
+#			rcCar.close()
 
 		# Don't want it to predict in real time, slow it down a few seconds
 		time.sleep(0.5)
-		rcCar.close()
+		rcCar.release()
 
-		for event in pygame.event.get():
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_q:
-					rcCar.close()
-					piCamera.close()
-					loop = False
+#		for event in pygame.event.get():
+#			if event.type == pygame.KEYDOWN:
+#				if event.key == pygame.K_q:
+#					rcCar.close()
+#					piCamera.close()
+#					loop = False
 
 def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, dataArgs):
 	if not dir.dir_exists(dataArgs.output[0]):
