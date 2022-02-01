@@ -6,14 +6,14 @@ Created on Sat Jan 29 08:46:01 2022
 """
 import socketserver, cv2
 import numpy as np
-import struct, socket, pygame, time
-from threading import Thread
+import struct, socket
+import threading
 import io
 from PIL import Image
 
 class VideoStreamHandler(socketserver.StreamRequestHandler):
-	def handle(self, connection, window):
-		streamBytes = b' '
+	def handle(self, connection):
+		windowName="Pi Camera Stream"
 
 		try:
 			connection = self.clientSocket.makefile('rb')
@@ -22,41 +22,36 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 		finally:
 			while self.connectFlag:
 				try:
-					streamBytes= connection.read(4)
-					len=struct.unpack('<L', streamBytes[:4])
-					jpg=connection.read(len[0])
 
-					if self.is_valid(jpg):
-						window.image = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-
+					imageLength = struct.unpack('<L', connection.read(struct.calcsize('<L')))[0]
+					
+					if not imageLength:
+						break
+					
+					imageStream = io.BytesIO()
+					imageStream.write(connection.read(imageLength))
+					imageStream.seek(0)
+					
+					fileBytes = np.asarray(bytearray(imageStream.read()), dtype=np.uint8)
+					
+					image = cv2.imdecode(fileBytes, cv2.IMREAD_COLOR)
+					
+					cv2.imshow(windowName, image)
+					cv2.waitKey(1)
+					
+					if cv2.getWindowProperty(windowName,cv2.WND_PROP_VISIBLE) < 1:
+							self.connectFlag = False
+						
 				except Exception as e:
 					print (e)
-					break
-
-class PyWindow():
-	def __init__(self):
-		pygame.init()
-		self.window = pygame.display.set_mode((640, 480))
-		self.x = (self.window.get_width() - 640) / 2
-		self.y = (self.window.get_height() - 480) / 2
-		self.image = None
-
-	def update(self):
-		pygame.event.pump
-
-		if self.image is not None:
-			img = pygame.image.frombuffer(self.image.tobytes(), self.image.shape[1::-1], "RGB")
-			self.window.fill(0)
-
-			if img:
-				self.window.blit(img, (self.x,self.y))
-
-			pygame.display.update()
-
-	def run(self):
-		while True:
-			self.update()
-
+					self.connectFlag = False
+					
+class ImageFeature():
+	def derp(self):
+		print('detectFace')
+	
+		print('detectStop')
+	
 class Server():
 	def __init__(self, host, port):
 		self.host = host
@@ -66,7 +61,7 @@ class Server():
 	def video_stream(self, videostream):
 		self.clientSocket.connect((self.host, self.port))
 		self.connectFlag=True
-		videostream.handle(self, self.clientSocket, display)
+		videostream.handle(self, self.clientSocket)
 
 	def is_valid(self, buf):
 		byteValid = True
@@ -87,13 +82,9 @@ class Server():
 if __name__ == '__main__':
 	h, p1 = "192.168.0.63", 50022
 	videoStream = VideoStreamHandler
-
-	display = PyWindow()
 	ts = Server(h, p1)
 
-	T = Thread(target=ts.run, args=(videoStream,), daemon=True)
+	T = threading.Thread(target=ts.run, args=(videoStream, ), daemon=True)
 	T.start()
-	T2 = Thread(target=display.run)
-	T2.start()
 
-	time.sleep(100)
+
