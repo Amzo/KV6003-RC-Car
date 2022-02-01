@@ -13,20 +13,26 @@ class Server(object):
 	def __init__(self, host, port):
 		self.host = host
 		self.port = port
+		self.videoThread = None
 
+
+	def start(self):
+		while True:
+			if self.videoThread is None:
+				self.videoThread = threading.Thread(target=self.videoStream, args=(), daemon=True)
+				self.videoThread.start()
+			elif not self.videoThread.is_alive():
+				self.videoThread = None
+
+	def videoStream(self):
 		self.serverSocket = socket.socket()
 		self.serverSocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)
 		print("binding socket to ", self.host, self.port)
 		self.serverSocket.bind((self.host, self.port))
+
 		print("Listening for connections")
 		self.serverSocket.listen(1)
 
-
-	def start(self):
-		self.videoThread = threading.Thread(target=self.videoStream, args=(), daemon=True)
-		self.videoThread.start()
-
-	def videoStream(self):
 		try:
 			print("Waiting for Connection")
 			self.connection,self.client_address = self.serverSocket.accept()
@@ -65,5 +71,4 @@ class Server(object):
 						print ("End transmit ... " )
 						break
 		except:
-            #print "Camera unintall"
 			pass
