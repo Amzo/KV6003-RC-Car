@@ -6,7 +6,7 @@ Created on Sat Jan 29 07:44:50 2022
 
 @author: Anthony Donnelly
 """
-import socket, picamera, time, struct, sys, io
+import socket, picamera, time, struct, io
 import threading
 class SplitFrames(object):
     def __init__(self, connection):
@@ -64,32 +64,7 @@ class Server(object):
 
 		try:
 			output = SplitFrames(self.connection)
-# 			with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
-# 				camera.resolution = (640,480)      # pi camera resolution
-# 				camera.framerate = 60               # 15 frames/sec
-# 				time.sleep(2)                       # give 2 secs for camera to initilize
-# 				start = time.time()
-# 				stream = io.BytesIO()
-#                 # send jpeg format video stream
-# 				print ("Start transmit ... ")
 
-# 				for image in camera.capture_continuous(stream, 'jpeg', use_video_port = True):
-# 					try:
-# 						self.connection.flush()
-# 						stream.seek(0)
-# 						b = stream.read()
-# 						length=len(b)
-# 						if length >5120000:
-# 							continue
-# 						lengthBin = struct.pack('L', length)
-# 						self.connection.write(lengthBin)
-# 						self.connection.write(b)
-# 						stream.seek(0)
-# 						stream.truncate()
-# 					except Exception as e:
-# 						print(e)
-# 						print ("End transmit ... " )
-# 						break
 			with picamera.PiCamera(resolution='VGA', framerate=24) as camera:
 				time.sleep(2)
 				while self.activeConnection:

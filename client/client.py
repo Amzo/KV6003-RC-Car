@@ -10,11 +10,14 @@ import struct, socket
 import threading
 import io
 from PIL import Image
+from mtcnn import MTCNN
 
 class VideoStreamHandler(socketserver.StreamRequestHandler):
 	def handle(self, connection):
 		windowName="Pi Camera Stream"
-
+		faceDetect = False
+		detector = MTCNN()
+		
 		try:
 			connection = self.clientSocket.makefile('rb')
 		except:
@@ -36,8 +39,16 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 					
 					image = cv2.imdecode(fileBytes, cv2.IMREAD_COLOR)
 					
+					if faceDetect:
+						image = detectFaceCNN(detector, image)
+						#image = detectFace(image)
+						
 					cv2.imshow(windowName, image)
-					cv2.waitKey(1)
+					k = cv2.waitKey(1)
+					
+					#toggle face detection on f key
+					if k == 102:
+						faceDetect = not faceDetect
 					
 					if cv2.getWindowProperty(windowName,cv2.WND_PROP_VISIBLE) < 1:
 							self.connectFlag = False
@@ -46,12 +57,6 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 					print (e)
 					self.connectFlag = False
 					
-class ImageFeature():
-	def derp(self):
-		print('detectFace')
-	
-		print('detectStop')
-	
 class Server():
 	def __init__(self, host, port):
 		self.host = host
@@ -78,7 +83,31 @@ class Server():
 	def run(self, videostream):
 		self.video_stream(videostream)
 
+def detectFace(frame):
+	faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+	frame = cv2.resize(frame, (200,100), interpolation = cv2.INTER_AREA)
+	greyImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	faces = faceCascade.detectMultiScale(greyImage, 1.3, 5)
+	
+	for (x,y,w,h) in faces:
+		frame = cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
 
+	frame = cv2.resize(frame,(640,480), interpolation = cv2.INTER_AREA)
+	
+	return frame
+
+def detectFaceCNN(detector, frame):
+	boxes = detector.detect_faces(frame)
+	
+	if boxes:
+		box = boxes[0]['box']
+		conf = boxes[0]['confidence']
+		x, y, w, h = box[0], box[1], box[2], box[3]
+ 
+		if conf > 0.5:
+			frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 1)
+
+	return frame
 if __name__ == '__main__':
 	h, p1 = "192.168.0.63", 50022
 	videoStream = VideoStreamHandler
