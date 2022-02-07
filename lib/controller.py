@@ -5,41 +5,40 @@ Created on Sat Jan 15 08:35:01 2022
 @author: Anthony Donnelly
 """
 import pygame
-import lib.cameraModule as cameraModule
 import lib.directory as dir
-import lib.trainedModel as  models
-import gpiozero
 import time, os
 
-def ai(loop, rcCar, rcDistance):
-#	model = models.load_model('models', 'model.tflite')
-
+def ai(loop, rcCar, rcDistance, streamConnection):
 	while loop:
-#		piCamera.update_window()
-#		piCamera.get_image()
-#		aiKey =  models.get_prediction(model, carCamera.imageFrame, rcDistance.distance * 100)
-
-#		if aiKey == "w":
-#			rcCar.move_forward()
-#		elif aiKey == "a":
-#			rcCar.turn_left()
-#		elif aiKey == "d":
-#			rcCar.turn_right()
-#		elif aiKey == "s":
-#			rcCar.move_backwards()
-#		else:
-#			rcCar.close()
-
-		# Don't want it to predict in real time, slow it down a few seconds
-		time.sleep(0.5)
+		print("Getting command")
+		streamConnection.getCommand()
+		# ignore empty strings in the data stream
+		aiKey = ''.join(streamConnection.commands).split()
+		try :
+			aiKey = aiKey[0]
+		except IndexError:
+			# client side might still be processing
+			pass
+			
+		print("prediction key is: ", aiKey)
+		if aiKey == "w":
+			print("moving forward")
+			rcCar.move_forward()
+		elif aiKey == "a":
+			rcCar.turn_left()
+		elif aiKey == "d":
+			rcCar.turn_right()
+		elif aiKey == "s":
+			rcCar.move_backwards()
+		elif aiKey == "q":
+			rcCar.turn_left_90()
+		elif aiKey == "e":
+			rcCar.turn_right_90()
+		else:
+			rcCar.release()
+			
+		time.sleep(0.1)
 		rcCar.release()
-
-#		for event in pygame.event.get():
-#			if event.type == pygame.KEYDOWN:
-#				if event.key == pygame.K_q:
-#					rcCar.close()
-#					piCamera.close()
-#					loop = False
 
 def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, dataArgs):
 	if not dir.dir_exists(dataArgs.output[0]):
@@ -55,7 +54,10 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 		"119": 'w',
 		"97": 'a',
 		"115": 's',
-		"100": 'd'
+		"100": 'd',
+		"101": 'e',
+		"113": 'q',
+		"116": 't'
 	}
 
 	while loop:
@@ -66,12 +68,13 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 			if event.type == pygame.KEYDOWN:
  				# get distance before executing a movement
 				distance = rcDistance.distance * 100
+				#print(distance)
 				# only capture on asdw keys
 
 				if dataArgs.data[0] and str(event.key) in inputKey and distance > 0:
 					carCamera.data_capture(inputKey[str(event.key)], imageNumber, distance,  dataArgs.output[0])
+					print("Captured image number {}".format(imageNumber))
 					imageNumber += 1
-
 				if event.key == pygame.K_w:
 					rcCar.move_forward()
 				elif event.key == pygame.K_s:
@@ -80,6 +83,13 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 					rcCar.turn_left()
 				elif event.key == pygame.K_d:
 					rcCar.turn_right()
+				elif event.key == pygame.K_e:
+					rcCar.turn_right_90()
+				elif event.key == pygame.K_q:
+					rcCar.turn_left_90()
+				elif event.key == pygame.K_t:
+					print(event.key)
+					rcCar.release()
 				elif event.key == pygame.K_LEFT:
 					servoLeftRight.turn_motor(10)
 				elif event.key == pygame.K_RIGHT:
@@ -88,7 +98,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
 					servoUpDown.turn_motor(-10)
 				elif event.key == pygame.K_DOWN:
 					servoUpDown.turn_motor(10)
-				elif event.key == pygame.K_q:
+				elif event.key == pygame.K_z:
 					# reset everything and exit
 					rcCar.release()
 					carCamera.release()

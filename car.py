@@ -23,8 +23,8 @@ config.read('config/config.ini')
 
 # initialize the car and servo
 rcCar = carSetup.Car()
-servoLeftRight = carSetup.Servo(12)
-servoUpDown = carSetup.Servo(5)
+servoLeftRight = carSetup.Servo(12, -10)
+servoUpDown = carSetup.Servo(5, 10)
 
 # initialize distance setting
 rcDistance = DistanceSensor(echo=4, trigger=27)
@@ -70,7 +70,8 @@ else:
 		streamConnection = network.Server(config['host']['serverName'], int(config['port']['Port']))
 		print("Starting video streaming server")
 		streamConnection.start()
-		controller.ai(True, rcCar, rcDistance)
+		print("Running A.I")
+		controller.ai(True, rcCar, rcDistance, streamConnection)
 	else:
 		carParser.print_help()
 		quit(1)

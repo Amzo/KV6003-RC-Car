@@ -39,7 +39,17 @@ class Car():
 		self.frontLeftWheel.forward()
 		self.rearRightWheel.backward()
 		self.rearLeftWheel.forward()
-
+		
+	# the time to 90 degrees depends entirely on the battery charge
+	# turns quicker at full power and slower at lower levels		
+	def turn_right_90(self):
+		self.turn_right()
+		time.sleep(0.72)
+		
+	def turn_left_90(self):
+		self.turn_left()
+		time.sleep(0.72)
+		
 	def release(self):
 #		try:
 		self.frontRightWheel.stop()
@@ -52,9 +62,9 @@ class Car():
 		self.rearLeftWheel.stop()
 
 class Servo(AngularServo):
-	def __init__(self, pin):
+	def __init__(self, pin, defaultAngle):
 		super().__init__(pin, min_angle=-90, max_angle=90)
-		self.angle = 0;
+		self.angle = defaultAngle;
 
 	def turn_motor(self, increment):
 		if self.ceiling_check(increment):
