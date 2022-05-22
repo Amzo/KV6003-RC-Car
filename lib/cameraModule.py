@@ -1,76 +1,71 @@
 ##!/usr/bin/env python3
-import pygame, cv2, csv
-import picamera, io
 import threading
 
-class carCamera():
-	def __init__(self):
-		pygame.init()
-		self.camera = picamera.PiCamera()
-		self.camera.resolution = (640, 480)
+import csv
+import cv2
+import io
+import picamera
+import pygame
 
-		self.imageFrame = None
-		self.resizeDims = (200, 100)
-		self.window = pygame.display.set_mode((640, 480))
-		self.loopFlag = True
 
-		self.cameraThread = None
+def write_csv(data, directory):
+    with open(directory + "labels.csv", 'a', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(data)
 
-	def start(self):
-		self.cameraThread = threading.Thread(target=self.update_window, args=(), daemon=True)
-		self.cameraThread.start()
-		#pool = ThreadPool(processes=1)
-		#pool.apply_async(self.update_window, args=())
 
-	def update_window(self):
-		x = (self.window.get_width() - self.camera.resolution[0]) / 2
-		y = (self.window.get_height() - self.camera.resolution[1]) / 2
+class carCamera:
+    def __init__(self):
+        pygame.init()
+        self.camera = picamera.PiCamera()
+        self.camera.resolution = (640, 480)
 
-		rgb = bytearray(self.camera.resolution[0] * self.camera.resolution[1] * 3)
+        self.imageFrame = None
+        self.resizeDims = (144, 144)
+        self.window = pygame.display.set_mode((640, 480))
+        self.loopFlag = True
 
-		stream = io.BytesIO()
-		self.camera.capture(stream, use_video_port=True, format='rgb')
-		stream.seek(0)
-		stream.readinto(rgb)
-		stream.close()
+        self.cameraThread = None
 
-		img = pygame.image.frombuffer(rgb[0:(self.camera.resolution[0] * self.camera.resolution[1] * 3)], self.camera.resolution, 'RGB')
-		self.window.fill(0)
+    def start(self):
+        self.cameraThread = threading.Thread(target=self.update_window, args=(), daemon=True)
+        self.cameraThread.start()
 
-		if img:
-			self.window.blit(img, (x,y))
+    def update_window(self):
+        x = (self.window.get_width() - self.camera.resolution[0]) / 2
+        y = (self.window.get_height() - self.camera.resolution[1]) / 2
 
-		pygame.display.update()
+        rgb = bytearray(self.camera.resolution[0] * self.camera.resolution[1] * 3)
 
-	def write_csv(self, data, directory):
-		with open(directory + "labels.csv", 'a', encoding='UTF8') as f:
-			writer = csv.writer(f)
-			writer.writerow(data)
+        stream = io.BytesIO()
+        self.camera.capture(stream, use_video_port=True, format='rgb')
+        stream.seek(0)
+        stream.readinto(rgb)
+        stream.close()
 
-	def get_image(self):
-		self.imageFrame = pygame.surface.Surface((640, 480),0,self.window)
-		self.process_surface_image()
+        img = pygame.image.frombuffer(rgb[0:(self.camera.resolution[0] * self.camera.resolution[1] * 3)],
+                                      self.camera.resolution, 'RGB')
+        self.window.fill(0)
 
-                # resize and convert to grey scale
-		self.transform_grey_scale()
+        if img:
+            self.window.blit(img, (x, y))
 
-		self.image_resize()
+        pygame.display.update()
 
-	def data_capture(self, input, number, distance, directory):
-		self.camera.capture(directory + 'image{}.jpg'.format(number), resize=(200, 100))
+    def data_capture(self, keyInput, number, distance, prevKey, directory):
+        self.camera.capture(directory + "/" + keyInput + '/image{}.jpg'.format(number), resize=(200, 100))
 
-		csvData = ["image{}.jpg".format(number), distance, input]
+        csvData = ["{}/image{}.jpg".format(keyInput, number), distance, prevKey, keyInput]
 
-		self.write_csv(csvData, directory)
+        write_csv(csvData, directory)
 
-	# resize and transform on capture to allow using high resolution for viewing cam stream in window still
-	def image_resize(self):
-		self.imageFrame = cv2.resize(self.imageFrame, self.resizeDims)
+    def image_resize(self):
+        self.imageFrame = cv2.resize(self.imageFrame, self.resizeDims)
 
-	def transform_grey_scale(self):
-		self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_RGB2GRAY)
+    def transform_grey_scale(self):
+        self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_RGB2GRAY)
 
-	def release(self):
-		self.loopFlag = False
-		self.camera.close()
-		pygame.quit()
+    def release(self):
+        self.loopFlag = False
+        self.camera.close()
+        pygame.quit()
