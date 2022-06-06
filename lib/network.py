@@ -141,7 +141,7 @@ class Server(object):
         try:
             output = SplitFrames(self.connection)
 
-            with picamera.PiCamera(resolution=(320, 240), framerate=12) as camera:
+            with picamera.PiCamera(resolution=(640, 480), framerate=12) as camera:
                 time.sleep(2)
                 while self.activeConnection:
                     camera.start_recording(output, format='mjpeg')

@@ -24,30 +24,37 @@ def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection):
             # client side might still be processing
             pass
 
-        print("prediction key is: ", aiKey)
-        if aiKey == "w":
-            print("moving forward")
-            rcCar.move_forward()
-        elif aiKey == "a":
-            rcCar.turn_left()
-        elif aiKey == "d":
-            rcCar.turn_right()
-        elif aiKey == "s":
-            rcCar.move_backwards()
-        elif aiKey == "q":
-            rcCar.turn_left_90()
-        elif aiKey == "e":
-            rcCar.turn_right_90()
-        elif aiKey == "i":
-            servoUpDown.turn_motor(-10)
-        elif aiKey == "k":
-            servoUpDown.turn_motor(+10)
-        elif aiKey == "j":
-            servoLeftRight.turn_motor(10)
-        elif aiKey == "l":
-            servoLeftRight.turn_motor(-10)
+        if aiKey in ["l", "c", "t", "r"] and rcDistance.distance < 30:
+            if aiKey == "r":
+                rcCar.turn_right_90()
+            elif aiKey == "l":
+                rcCar.turn_left_90()
+            else:
+                rcCar.release()
         else:
-            rcCar.release()
+            if aiKey == "w":
+                print("moving forward")
+                rcCar.move_forward()
+            elif aiKey == "a":
+                rcCar.turn_left()
+            elif aiKey == "d":
+                rcCar.turn_right()
+            elif aiKey == "s":
+                rcCar.move_backwards()
+            elif aiKey == "q":
+                rcCar.turn_left_90()
+            elif aiKey == "e":
+                rcCar.turn_right_90()
+            elif aiKey == "i":
+                servoUpDown.turn_motor(-10)
+            elif aiKey == "k":
+                servoUpDown.turn_motor(+10)
+            elif aiKey == "j":
+                servoLeftRight.turn_motor(10)
+            elif aiKey == "l":
+                servoLeftRight.turn_motor(-10)
+            else:
+                rcCar.release()
 
         time.sleep(0.1)
         rcCar.release()
@@ -62,6 +69,8 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
     else:
         imageNumber = (myDir.get_image_num(dataArgs.output[0]) + 1)
 
+#    carCamera.imageNumber = imageNumber
+#    carCamera.start_capture()
     # dictionary of event.Key to their corresponding keys for easier logging of data to csv
     inputKey = {
         "119": 'w',
@@ -79,6 +88,7 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
         for event in pygame.event.get():
             if event.type == pygame.KEYUP:
                 rcCar.release()
+                carCamera.capture = False
             if event.type == pygame.KEYDOWN:
                 # get distance before executing a movement
                 distance = rcDistance.distance * 100

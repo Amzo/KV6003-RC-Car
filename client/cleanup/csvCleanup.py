@@ -1,41 +1,35 @@
 import csv
 import os
+import shutil
 import sys
 import time
 from _csv import reader
-from typing import Any
+import re
 
-import cv2
-import mediapipe as mp
-from PIL import Image, ImageTk
+try:
+    with open('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\' + "labels.csv", 'r') as file:
+        data = file.readlines()
 
-mpHands = mp.solutions.hands
-hands = mpHands.Hands(max_num_hands=1)
-mpDraw = mp.solutions.drawing_utils
+    lastImage = data[-1].split(',')[0]
 
-letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W",
-           "X", "Y"]
+    imageNumber = int(re.search(r'\d+', lastImage).group(0))
 
-data = csv.reader(open('C:\\Users\\Amzo\\Documents\\Robotics Assignment\\NewData\\data.csv'))
+except (FileNotFoundError, AttributeError):
+    pass
 
-for i in letters:
-    directory = 'C:\\Users\\Amzo\\Documents\\Robotics Assignment\\NewData\\Test\\'
-    for file in os.listdir(directory + '{}\\'.format(i)):
-        with open('C:\\Users\\Amzo\\Documents\\Robotics Assignment\\NewData\\data.csv', 'r') as read_obj:
-            # pass the file object to reader() to get the reader object
-            csv_reader = reader(read_obj)
-            # Iterate over each row in the csv using reader object
-            for row in csv_reader:
-                # row variable is a list that represents a row in csv
-                if row[0] == file and row[-1] == i:
-                    with open('{}/newDdata.csv'.format('C:\\Users\\Amzo\\Documents\\Robotics Assignment\\NewData\\'), 'a', newline='') as f:
-                        writer = csv.writer(f)
-                        writer.writerow(row)
+with open('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train1\\labels.csv', 'r') as read_obj:
+    # pass the file object to reader() to get the reader object
+    csv_reader = reader(read_obj)
+    # Iterate over each row in the csv using reader object
+    for row in csv_reader:
+        # row variable is a list that represents a row in csv
+        print("copying file " + row[0] + " to " + row[2])
+        shutil.copy('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train1\\' + row[0],
+                    'C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\' + row[2] + "\\" + "image{}.jpg".format(imageNumber))
 
-
-
-
-
-
-
-
+        row[0] = row[2] + "/" + "image{}.jpg".format(imageNumber)
+        with open('{}/labels.csv'.format('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\'),
+                  'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(row)
+        imageNumber += 1

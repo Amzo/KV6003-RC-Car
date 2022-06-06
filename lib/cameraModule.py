@@ -6,7 +6,7 @@ import cv2
 import io
 import picamera
 import pygame
-
+from time import sleep
 
 def write_csv(data, directory):
     with open(directory + "labels.csv", 'a', encoding='UTF8') as f:
@@ -19,9 +19,11 @@ class carCamera:
         pygame.init()
         self.camera = picamera.PiCamera()
         self.camera.resolution = (640, 480)
-
+        self.outputLocation = None
+        
+        self.capture = False
+        self.imageNumber = None
         self.imageFrame = None
-        self.resizeDims = (144, 144)
         self.window = pygame.display.set_mode((640, 480))
         self.loopFlag = True
 
@@ -53,14 +55,11 @@ class carCamera:
         pygame.display.update()
 
     def data_capture(self, keyInput, number, distance, prevKey, directory):
-        self.camera.capture(directory + "/" + keyInput + '/image{}.jpg'.format(number), resize=(200, 100))
+        self.camera.capture(directory + "/" + keyInput + '/image{}.jpg'.format(number), resize=(320, 240))
 
         csvData = ["{}/image{}.jpg".format(keyInput, number), distance, prevKey, keyInput]
 
         write_csv(csvData, directory)
-
-    def image_resize(self):
-        self.imageFrame = cv2.resize(self.imageFrame, self.resizeDims)
 
     def transform_grey_scale(self):
         self.imageFrame = cv2.cvtColor(self.imageFrame, cv2.COLOR_RGB2GRAY)

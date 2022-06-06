@@ -5,7 +5,9 @@ import cv2
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from keras import Input, Model
 from keras.callbacks import ReduceLROnPlateau
+from keras.layers import Cropping2D, Lambda, Conv2D, Flatten, Dense, Dropout
 from keras_preprocessing.image import ImageDataGenerator
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -15,7 +17,10 @@ from sklearn.model_selection import KFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelBinarizer
 from tensorflow.python.keras import regularizers
+
 from tensorflow.python.keras.layers import concatenate
+from tensorflow import train
+
 from sklearn.utils import shuffle
 
 from lib.debug import LogInfo
@@ -126,18 +131,6 @@ class customModel(tf.keras.callbacks.Callback):
             else:
                 self.prevKey = np.array([0.99])
 
-    def gen_flow_for_two_inputs(self, gen):
-        genX1 = gen.flow(self.x1Train, self.yTrain, batch_size=64, seed=987654321)
-        genX2 = gen.flow(self.x1Train, self.x2Train, batch_size=64, seed=987654321)
-
-        while True:
-            X1i = genX1.next()
-            X2i = genX2.next()
-
-            # Assert arrays are equal - this was for peace of mind, but slows down training
-            np.testing.assert_array_equal(X1i[0], X2i[0])
-            yield [X1i[0], X2i[1]], X1i[1]
-
     def train(self):
         self.carDataSet = pd.read_csv(self.rootWindow.trainTab.saveLocation.get() + "/Train/labels.csv",
                                       names=["Image", "prevKey", "Key"])
@@ -148,17 +141,12 @@ class customModel(tf.keras.callbacks.Callback):
             img = cv2.imread(self.rootWindow.trainTab.saveLocation.get() + "/Train/" + self.carDataSet['Image'][i],
                              cv2.IMREAD_COLOR)
 
-            image = crop_bottom_half(img)
+            # image = crop_bottom_half(img)
 
-            self.train_image.append(np.asarray(image))
+            self.train_image.append(np.asarray(img))
             self.train_label.append(self.carDataSet['Key'][i])
 
             self.rootWindow.trainTab.progressValue.set(i + 1 * updateValue)
-
-        # drop none needed columns and create the features and labels for training
-        self.carDataSet.drop('Image', inplace=True, axis=1)
-        self.carDataSet.drop('Key', inplace=True, axis=1)
-        featureList = self.carDataSet.iloc[:]
 
         self.carDataSet = pd.read_csv(self.rootWindow.trainTab.saveLocation.get() + "/Validate/labels.csv",
                                       names=["Image", "prevKey", "Key"])
@@ -168,7 +156,7 @@ class customModel(tf.keras.callbacks.Callback):
         for i in range(self.carDataSet.shape[0]):
             img = cv2.imread(self.rootWindow.trainTab.saveLocation.get() + "/Validate/" + self.carDataSet['Image'][i],
                              cv2.IMREAD_COLOR)
-            img = crop_bottom_half(img)
+            # img = crop_bottom_half(img)
             # normalise data, data augmentation does this for train set after augmenting
             # though validation and test sets need to be normalised by me as augmentation is not
             # applied to them.
@@ -179,11 +167,6 @@ class customModel(tf.keras.callbacks.Callback):
 
             self.rootWindow.trainTab.progressValue.set(i + 1 * updateValue)
 
-        self.carDataSet.drop('Image', inplace=True, axis=1)
-        self.carDataSet.drop('Key', inplace=True, axis=1)
-
-        validateFeatureList = self.carDataSet.iloc[:]
-
         self.carDataSet = pd.read_csv(self.rootWindow.trainTab.saveLocation.get() + "/Test/labels.csv",
                                       names=["Image", "prevKey", "Key"])
 
@@ -192,7 +175,7 @@ class customModel(tf.keras.callbacks.Callback):
         for i in range(self.carDataSet.shape[0]):
             img = cv2.imread(self.rootWindow.trainTab.saveLocation.get() + "/Test/" + self.carDataSet['Image'][i],
                              cv2.IMREAD_COLOR)
-            img = crop_bottom_half(img)
+            # img = crop_bottom_half(img)
             img = img / 255
 
             self.test_image.append(np.asarray(img))
@@ -200,24 +183,15 @@ class customModel(tf.keras.callbacks.Callback):
 
             self.rootWindow.trainTab.progressValue.set(i + 1 * updateValue)
 
-        # drop none needed columns and create the features and labels for training
-        self.carDataSet.drop('Image', inplace=True, axis=1)
-        self.carDataSet.drop('Key', inplace=True, axis=1)
-
-        testFeatureList = self.carDataSet.iloc[:]
-
         self.x1Train = np.array(self.train_image)
         trainLabels = np.array(self.train_label)
-        self.x2Train = np.array(featureList)
         print(len(self.x2Train))
 
         self.x1Validate = np.array(self.validate_image)
         validateLabels = np.array(self.validate_label)
-        self.x2Validate = np.array(validateFeatureList)
 
         self.x1Test = np.array(self.test_image)
         testLabels = np.array(self.test_label)
-        self.x2Test = np.array(testFeatureList)
 
         encoder = LabelBinarizer()
         encoder.fit(trainLabels)
@@ -241,7 +215,7 @@ class customModel(tf.keras.callbacks.Callback):
             channel_shift_range=50,
             rescale=1. / 255.0, )
 
-        gen_flow = self.gen_flow_for_two_inputs(gen)
+        genX1 = gen.flow(self.x1Train, self.yTrain, batch_size=64, seed=987654321)
 
         # prepare to use kfold on multiple inputs
         kfold = KFold(n_splits=3, shuffle=True)
@@ -252,7 +226,6 @@ class customModel(tf.keras.callbacks.Callback):
         # since we're using kfold, join the validation data to train data before splitting
         # keep test data model evaluation
         np.concatenate((self.x1Train, self.x1Validate), axis=0)
-        np.concatenate((self.x2Train, self.x2Validate), axis=0)
         np.concatenate((self.yTrain, self.yValidate), axis=0)
 
         for x in range(len(self.x1Train)):
@@ -268,45 +241,37 @@ class customModel(tf.keras.callbacks.Callback):
                 monitor='val_accuracy', verbose=1,
                 save_best_only=True, mode='max')
 
-            self.Fold_Train_Input1, self.Fold_Train_Input2 = self.x1Train[trainID], self.x2Train[trainID]
+            self.Fold_Train_Input1 = self.x1Train[trainID]
             self.Fold_Train_OutPut = self.yTrain[trainID]
 
-            self.Fold_Test_Input1, self.Fold_Test_Input2 = self.x1Train[testID], self.x2Train[testID]
+            self.Fold_Test_Input1 = self.x1Train[testID]
             self.Fold_Test_OutPut = self.yTrain[testID]
 
             # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
 
-            if self.fold_var == 1:
-                # Since the weights are loaded after every kfold has been trained, only set the optimizer once
-                self.createModel()
-                opt = tf.keras.optimizers.Adam(learning_rate=0.0001, epsilon=1e-8, beta_1=0.9, beta_2=0.999)
+            # Since the weights are loaded after every kfold has been trained, only set the optimizer once
+            self.createModel()
+            opt = tf.keras.optimizers.Adam(learning_rate=0.0001, epsilon=1e-8, beta_1=0.9, beta_2=0.999)
 
-                if self.rootWindow.debug.get():
-                    self.rootWindow.debugWindow.logText(LogInfo.debug.value,
-                                                        "Compiling the model loss: categorical crossentropy, optimizer: Adam")
+            if self.rootWindow.debug.get():
+                self.rootWindow.debugWindow.logText(LogInfo.debug.value,
+                                                    "Compiling the model loss: categorical crossentropy, optimizer: Adam")
 
-                self.model.compile(loss='categorical_crossentropy', optimizer=opt,
-                                   metrics=['categorical_crossentropy', 'accuracy', tf.keras.metrics.Precision(),
-                                            tf.keras.metrics.Recall()])
-
-                print(self.model.summary())
-            else:
-                # Load best previous weights
-                self.model.load_weights(
-                    self.rootWindow.trainTab.modelSaveLocation.get() + "/model_" + str(self.fold_var - 1) + ".h5")
+            self.model.compile(loss='categorical_crossentropy', optimizer=opt,
+                               metrics=['categorical_crossentropy', 'accuracy', tf.keras.metrics.Precision(),
+                                        tf.keras.metrics.Recall()])
 
             self.rootWindow.trainTab.logText(LogInfo.info.value,
                                              "Starting training on fold number {}".format(self.fold_var))
-            self.model.fit(gen_flow, verbose=1,
+            self.model.fit(genX1, verbose=1,
                            epochs=self.rootWindow.trainTab.epochs,
-                           validation_data=(
-                               [self.Fold_Test_Input1, self.Fold_Test_Input2], self.Fold_Test_OutPut),
+                           validation_data=(self.Fold_Test_Input1, self.Fold_Test_OutPut),
                            steps_per_epoch=len(self.Fold_Train_Input1) / 64,
                            shuffle=True,
                            callbacks=[self, model_checkpoint_callback, tensorboard_callback], )
 
             if self.rootWindow.debug.get():
-                self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Loading best saved model")
+                self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Loading best saved model to run on test set")
 
             self.model = tf.keras.models.load_model(
                 self.rootWindow.trainTab.modelSaveLocation.get() + "/model_" + str(self.fold_var) + ".h5")
@@ -314,7 +279,7 @@ class customModel(tf.keras.callbacks.Callback):
             if self.rootWindow.debug.get():
                 self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Evaluating the best model on test data")
 
-            score = self.model.evaluate([self.x1Test, self.x2Test], self.yTest)
+            score = self.model.evaluate(self.x1Test, self.yTest)
 
             # Score is a list containing loss, categorical_crossentropy, accuracy, precision, recall
 
@@ -345,41 +310,24 @@ class customModel(tf.keras.callbacks.Callback):
         if self.rootWindow.debug.get():
             self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Creating a model for distance and previous key")
 
-        distance = tf.keras.Input(shape=(1,), name='distance')
-        x = tf.keras.layers.Dense(32, activation="relu", activity_regularizer=regularizers.L2(0.01))(distance)
-        x = tf.keras.layers.Dropout(0.2)(x)
-        x = tf.keras.layers.Dense(16, activation="relu", activity_regularizer=regularizers.L2(0.01))(x)
-        x = tf.keras.layers.Dropout(0.2)(x)
-        x = tf.keras.layers.Dense(8, activation="relu")(x)
-        x = tf.keras.Model(inputs=distance, outputs=x)
+        input_image = Input(shape=(100, 200, 3))
 
-        img = (50, 200, 3)
+        x = input_image
 
-        inputs = tf.keras.Input(shape=img, name='xception')
+        x = Lambda(lambda x: x / 255.0, input_shape=(100, 200, 3))(x)
+        x = Cropping2D(cropping=((90, 0), (0, 0)))(x)
 
-        if self.rootWindow.debug.get():
-            self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Loading xception model")
+        x = Conv2D(32, (5, 5), strides=(2, 2))(x)
+        x = Conv2D(64, (5, 5), strides=(2, 2))(x)
+        x = Conv2D(64, (3, 3), strides=(1, 1))(x)
+        x = Conv2D(64, (3, 3), strides=(1, 1))(x)
+        x = Flatten()(x)
 
-        xceptionModel = tf.keras.applications.xception.Xception(input_tensor=inputs, include_top=False,
-                                                                weights='imagenet')
+        x = Dense(100)(x)
+        x = Dropout(0.1)(x)
+        x = Dense(50)(x)
+        x = Dropout(0.1)(x)
 
-        for layer in xceptionModel.layers[:-2]:
-            layer.trainable = False
+        steering_output = Dense(3, activation="softmax", name="steering")(x)
 
-        y = tf.keras.layers.Dense(512, activation="relu", activity_regularizer=regularizers.L2(0.01))(
-            xceptionModel.output, training=True)
-        y = tf.keras.layers.Flatten()(y)
-        y = tf.keras.layers.Dense(256, activation="relu", )(y)
-        y = tf.keras.layers.Dropout(0.2)(y)
-        y = tf.keras.layers.Dense(128, activation="relu")(y)
-        y = tf.keras.Model(xceptionModel.input, y)
-
-        if self.rootWindow.debug.get():
-            self.rootWindow.debugWindow.logText(LogInfo.debug.value,
-                                                "Concatenating outputs of distance model and xception model")
-        combined = concatenate([x.output, y.output])
-
-        combined = tf.keras.layers.Dense(64, activation="relu")(combined)
-        z = tf.keras.layers.Dense(3, activation="softmax")(combined)
-
-        self.model = tf.keras.Model(inputs=[y.input, x.input], outputs=z)
+        self.model = Model(inputs=[input_image], outputs=[steering_output])
