@@ -5,31 +5,25 @@ import sys
 import time
 from _csv import reader
 import re
+import cv2 as cv
+from tkinter import Tk     # from tkinter import Tk for Python 3.x
+from tkinter.filedialog import askdirectory
+
+Tk().withdraw()
+filename = askdirectory()
 
 try:
-    with open('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\' + "labels.csv", 'r') as file:
-        data = file.readlines()
+    with open(f"{filename}/labels.csv", 'r') as file:
+        csv_reader = reader(file)
+        for row in csv_reader:
+            print(row[0])
+            image = cv.imread(f"{filename}/{row[0]}")
+            cv.imshow(f"Image Check: {row[0]}", image)
+            k = cv.waitKey()
+            if k == 100:
+                os.remove(f"{filename}/{row[0]}")
 
-    lastImage = data[-1].split(',')[0]
-
-    imageNumber = int(re.search(r'\d+', lastImage).group(0))
-
+            # open file to check
+            cv.destroyAllWindows()
 except (FileNotFoundError, AttributeError):
     pass
-
-with open('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train1\\labels.csv', 'r') as read_obj:
-    # pass the file object to reader() to get the reader object
-    csv_reader = reader(read_obj)
-    # Iterate over each row in the csv using reader object
-    for row in csv_reader:
-        # row variable is a list that represents a row in csv
-        print("copying file " + row[0] + " to " + row[2])
-        shutil.copy('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train1\\' + row[0],
-                    'C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\' + row[2] + "\\" + "image{}.jpg".format(imageNumber))
-
-        row[0] = row[2] + "/" + "image{}.jpg".format(imageNumber)
-        with open('{}/labels.csv'.format('C:\\Users\\Amzo\\Documents\\RC Car Data\\NewData\\Train\\'),
-                  'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(row)
-        imageNumber += 1

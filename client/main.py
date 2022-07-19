@@ -3,5 +3,5 @@
 from lib import gui
 
 ourGUI = gui.Gui()
-#ourGUI.updateWindow()
+# ourGUI.updateWindow()
 threadRunning = True

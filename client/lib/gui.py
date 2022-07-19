@@ -19,7 +19,6 @@ class TabWidget:
         self.tabControl = ttk.Notebook(master)
         self.tab1 = ttk.Frame(self.tabControl)
         self.tab2 = ttk.Frame(self.tabControl)
-        self.tab3 = ttk.Frame(self.tabControl)
         self.tabControl.add(self.tab1, text='Predict')
         self.tabControl.add(self.tab2, text='Train')
         self.tabControl.pack(expand=1, fill="both")
@@ -46,7 +45,6 @@ class Gui(threading.Thread):
 
         # Frame data for each widget
         self.imgFrame = None
-        self.signImg = None
         self.predFrame = None
         self.checkFrame = None
 

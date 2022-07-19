@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import ray
 import time
+from cython.parallel import parallel, prange
 
 try:
     from gpiozero import Motor, AngularServo
@@ -16,50 +16,54 @@ class Car:
         self.__frontLeftWheel = Motor(6, 13)
         self.__rearRightWheel = Motor(7, 16)
 
-
-    #parallize the execution of the wheel. having the code linearly means some wheels start up before others
-    # causing drifts to left or right, having each one run in parallel allongs the execution of all wheels
-    # simutaneously
-    @ray.remote
     def frw(self, direction):
         if direction:
             self.__frontRightWheel.forward()
         else:
             self.__frontRightWheel.backward()
 
-    @ray.remote
     def flw(self, direction):
         if direction:
             self.__frontLeftWheel.forward()
         else:
             self.__frontLeftWheel.backward()
 
-    @ray.remote
     def rrw(self, direction):
         if direction:
             self.__rearRightWheel.forward()
         else:
             self.__rearRightWheel.backward()
 
-    @ray.remote
     def rlw(self, direction):
-       if direction:
-           self.__rearLeftWheel.forward()
-       else:
-           self.__rearLeftWheel.backward()
+        if direction:
+            self.__rearLeftWheel.forward()
+        else:
+            self.__rearLeftWheel.backward()
 
     def move_forward(self):
-        ray.get([frw.remote(True), flw.remote(True), rrw.remote(True), rlw.remote(True)])
+            self.frw(True)
+            self.flw(True)
+            self.rrw(True)
+            self.rlw(True)
 
     def move_backwards(self):
-        ray.get([frw.remote(False), flw.remote(False), rrw.remote(False), rlw.remote(False)])
+            self.frw(False)
+            self.flw(False)
+            self.rrw(False)
+            self.rlw(False)
 
     def turn_left(self):
-        ray.get([frw.remote(True), flw.remote(False), rrw.remote(True), rlw.remote(False)])
-        # Move wheels in opposing directions to turn
+            self.frw(True)
+            self.flw(False)
+            self.rrw(True)
+            self.rlw(False)
+            # Move wheels in opposing directions to turn
 
     def turn_right(self):
-        ray.get([frw.remote(False), flw.remote(True), rrw.remote(False), rlw.remote(True)])
+            self.frw(False)
+            self.flw(True)
+            self.rrw(False)
+            self.rlw(True)
 
     # the time to 90 degrees depends entirely on the battery charge
     # turns quicker at full power and slower at lower levels
@@ -72,10 +76,10 @@ class Car:
         time.sleep(0.72)
 
     def release(self):
-        self.frontRightWheel.stop()
-        self.frontLeftWheel.stop()
-        self.rearRightWheel.stop()
-        self.rearLeftWheel.stop()
+        self.__frontRightWheel.stop()
+        self.__frontLeftWheel.stop()
+        self.__rearRightWheel.stop()
+        self.__rearLeftWheel.stop()
 
 
 class Servo(AngularServo):

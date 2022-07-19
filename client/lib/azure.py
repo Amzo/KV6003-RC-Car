@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import configparser
+import os
 
 import cv2
 import numpy as np
@@ -19,15 +20,16 @@ class CarObjectDetection:
         self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": self.config['azure']['cv_key']})
         print(self.config['azure']['cv_endpoint'])
         self.__predictor = CustomVisionPredictionClient(endpoint=self.config['azure']['cv_endpoint'],
-                                                      credentials=self.__credentials)
+                                                        credentials=self.__credentials)
 
     def getPrediction(self):
         cv2.imwrite('data/image.jpg', self.checkImage)
 
-        with open('data/image.jpg', mode="rb") as test_data:
-            self.results = self.__predictor.detect_image(self.config['azure']['project_id'],
-                                                       self.config['azure']['model_name'],
-                                                       test_data)
+        if os.path.exists('data/image.jpg'):
+            with open('data/image.jpg', mode="rb") as test_data:
+                self.results = self.__predictor.detect_image(self.config['azure']['project_id'],
+                                                             self.config['azure']['model_name'],
+                                                             test_data)
 
     def filterResults(self):
         self.results_list = []

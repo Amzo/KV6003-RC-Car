@@ -47,7 +47,6 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 
                 if rootGui.predictTab.modelLoaded is True and not detectionPerformed:
                     carObjectDetect.checkImage = image
-
                     carObjectDetect.getPrediction()
 
                     carObjectDetect.filterResults()

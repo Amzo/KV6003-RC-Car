@@ -10,6 +10,9 @@ import argparse
 # configuration parsing
 import configparser
 
+# profiling to find bottleneck
+import cProfile
+
 # setup pin factory for all devices, default to pigpio to minimize stutter from software PWM
 from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero import Device, DistanceSensor
@@ -47,28 +50,29 @@ carParser.add_argument('-o', '--output', metavar='output', type=str,
                        help="Specify output directory for data collection")
 
 carParser.add_argument('-i', '--ignore', metavar='ignore', type=str,
-                       nargs=5, default="l",
+                       nargs=3, default="l",
                        help="Ignore key in data collection")
 
 args = carParser.parse_args()
 
-try:
-    args.controller[0]
-except NameError:
-    carParser.print_help()
-    # return 1 for error on unix just good practice
-    quit(1)
-else:
-    if args.controller[0] == 'manual':
-        try:
-            carCamera = cameraModule.carCamera()
-        #except:
-        #    print("Issues initializing pi camera")
-        finally:
-            controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
-    elif args.controller[0] == 'ai':
-        streamConnection = network.start_connection()
-        controller.ai(True, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection)
-    else:
+if __name__ == '__main__':
+    try:
+        args.controller[0]
+    except NameError:
         carParser.print_help()
+        # return 1 for error on unix just good practice
         quit(1)
+    else:
+        if args.controller[0] == 'manual':
+            try:
+                carCamera = cameraModule.CarCamera()
+            #except:
+            #    print("Issues initializing pi camera")
+            finally:
+                controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
+        elif args.controller[0] == 'ai':
+            streamConnection = network.start_connection()
+            controller.ai(True, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection)
+        else:
+            carParser.print_help()
+            quit(1)
