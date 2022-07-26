@@ -15,7 +15,7 @@ from lib import models as OurModels
 
 class PredictTab:
     def __init__(self, master=None, tabs=None):
-        self.ourModel = OurModels.customModel(root_window=master)
+        self.ourModel = OurModels.CustomModel(root_window=master)
         self.model = None
         self.modelLoaded = False
         self.loaded_model = None

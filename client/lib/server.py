@@ -39,6 +39,7 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 
                 image = cv2.imdecode(fileBytes, cv2.IMREAD_COLOR)
                 imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image = Image.fromarray(imageRGB)
 
                 rootGui.predFrame = ImageTk.PhotoImage(image=Image.fromarray(imageRGB))
 

@@ -159,7 +159,7 @@ class TrainTab:
         if self.rootWindow.debug.get():
             self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Creating Xception based model")
 
-        self.model = ourModels.customModel(root_window=self.rootWindow)
+        self.model = ourModels.CustomModel(root_window=self.rootWindow)
         self.model.createModel()
 
         if self.rootWindow.debug.get():
