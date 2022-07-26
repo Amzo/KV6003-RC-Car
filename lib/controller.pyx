@@ -22,17 +22,22 @@ def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection):
         aiKey = ''.join(streamConnection.commands).split()
         try:
             aiKey = aiKey[0]
+            print(aiKey)
         except IndexError:
             # client side might still be processing
             pass
 
-        if aiKey in ["l", "c", "t", "r"] and rcDistance.distance < 30:
+        if aiKey in ["l", "c", "t", "r"] and rcDistance.distance < 0.30:
             if aiKey == "r":
                 rcCar.turn_right_90()
             elif aiKey == "l":
                 rcCar.turn_left_90()
             else:
+                print(f'Stopping because of stop sign and Ditance is {rcDistance.distance}')
                 rcCar.release()
+        elif aiKey in ["l", "c", "t", "r"] and rcDistance.distance > 0.30:
+            time.sleep(0.5)
+            rcCar.move_forward()
         else:
             if aiKey == "w":
                 print("moving forward")

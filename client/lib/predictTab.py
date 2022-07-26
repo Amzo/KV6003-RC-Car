@@ -7,17 +7,26 @@ from functools import partial
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+from PIL import Image
+
 from lib import piWindow
 from lib import server as ourServer
 from lib.debug import LogInfo
 from lib import models as OurModels
+import lib.azure as carObject
+import multiprocessing
 
 
 class PredictTab:
     def __init__(self, master=None, tabs=None):
+        self.objResults = multiprocessing.Value('c', b't')
+        self.imageCount = multiprocessing.Value('i', 0)
+        self.results = multiprocessing.Value('c', b't')
+        self.gotPrediction = multiprocessing.Value('i', 0)
+        self.results_list = None
         self.ourModel = OurModels.CustomModel(root_window=master)
         self.model = None
-        self.modelLoaded = False
+        self.modelLoaded = multiprocessing.Value('b', False)
         self.loaded_model = None
         self.up = None
         self.ts = None
@@ -34,6 +43,7 @@ class PredictTab:
         self.turnRight = tk.StringVar(master.rootWindow)
         self.connectText = tk.StringVar(master.rootWindow)
         self.keyMap = {}
+        self.stop = False
 
         self.selectedModel = tk.StringVar(master.rootWindow)
         self.modelList = ['CNN']
@@ -62,7 +72,7 @@ class PredictTab:
                                        command=partial(self.connect))
 
     def placeWidgets(self, placement):
-        self.videoPredLabel.place(x=640/2, y=490 / 2, anchor=tk.CENTER)
+        self.videoPredLabel.place(x=640 / 2, y=490 / 2, anchor=tk.CENTER)
         self.connectFrame.place(x=650, y=5)
 
         self.hostLbl.place(x=placement - 50, y=40, anchor=tk.E)
@@ -85,21 +95,41 @@ class PredictTab:
         self.mainWindow = self.rootClass
         h = str(self.hostIp.get())
         p1 = int(self.port.get())
-        self.mainWindow.updateWindow()
         self.videoStream = ourServer.VideoStreamHandler
         self.ts = ourServer.Server(h, p1, self, self.mainWindow)
         T = threading.Thread(target=self.ts.run, args=(self.videoStream,), daemon=True)
         T.start()
 
-    def updateList(self, who, *args):
-        value = str(*args[0])
-        print(who, value)
+    # don't block other threads
+    def predictionThread(self):
+        carObjectDetect = carObject.CarObjectDetection()
+        self.loaded_model = self.ourModel.loadModel()
+        self.modelLoaded.value = True
 
-        if value in self.keyMap.values():
-            messagebox.showerror('Error', 'this character is already bound')
-            print(self.keyMap)
-        else:
-            self.keyMap[who] = value
+        while True:
+            if self.imageCount.value >= 12 and self.modelLoaded.value:
+                if os.path.exists('image.jpg'):
+                    im = Image.open(r"image.jpg")
+
+                carObjectDetect.getPrediction()
+                carObjectDetect.filterResults()
+                for x in carObjectDetect.results_list:
+                    self.objResults = str.encode(x)
+
+                if self.gotPrediction.value == 0:
+                    if not self.stop:
+                        result = self.ourModel.makePrediction(im)
+                        self.results.value = str.encode(result)
+
+                        if self.rootClass.debug.get():
+                            self.rootClass.debugWindow.logText(LogInfo.debug.value,
+                                                               "Got prediction {}".format(self.ourModel.results[0]))
+
+                        print(self.results.value)
+
+                    self.gotPrediction.value = 1
+                    self.imageCount.value = 0
+                    os.remove('image.jpg')
 
     def modelBrowse(self):
         filetypes = (
@@ -120,5 +150,6 @@ class PredictTab:
         except AttributeError:
             messagebox.showerror('Error', 'Connect to the remote car server')
 
-        self.loaded_model = self.ourModel.loadModel()
-        self.modelLoaded = True
+        ps = multiprocessing.Process(target=self.predictionThread)
+        ps.start()
+

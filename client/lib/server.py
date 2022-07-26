@@ -7,9 +7,7 @@ import cv2
 import pandas as pd
 from PIL import Image, ImageTk
 import numpy as np
-from lib import models as ourModel
 from lib.debug import LogInfo
-import lib.azure as carObject
 
 
 class VideoStreamHandler(socketserver.StreamRequestHandler):
@@ -20,11 +18,6 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
             print("Connection Failed")
 
         finally:
-            imageCount = 0
-            detectionCount = 0
-            carObjectDetect = carObject.CarObjectDetection()
-            detectionPerformed = False
-
             while self.connectFlag:
                 imageLength = struct.unpack('<L', connection.read(struct.calcsize('<L')))[0]
 
@@ -39,43 +32,21 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 
                 image = cv2.imdecode(fileBytes, cv2.IMREAD_COLOR)
                 imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image = Image.fromarray(imageRGB)
 
-                rootGui.predFrame = ImageTk.PhotoImage(image=Image.fromarray(imageRGB))
+                # As the image comes in streams, ensure we don't update the image while a new image
+                # is being fetched
+                if not rootGui.newFrame:
+                    rootGui.checkFrame = ImageTk.PhotoImage(image=Image.fromarray(imageRGB))
+                    rootGui.predFrame = Image.fromarray(image)
+                    tabGui.imageCount.value += 1
+                    rootGui.newFrame = True
 
-                rootGui.updateWindow()
-                imageCount += 1
-
-                if rootGui.predictTab.modelLoaded is True and not detectionPerformed:
-                    carObjectDetect.checkImage = image
-                    carObjectDetect.getPrediction()
-
-                    carObjectDetect.filterResults()
-
-                    for x in carObjectDetect.results_list:
-                        print("Sending command {}".format(x))
-                        commands.send(('{0}\n'.format(x)).encode('utf-8'))
-
-                    detectionPerformed = True
-                    detectionCount = 0
-
-                if tabGui.selectedModel.get() == "CNN" and imageCount >= 6 \
-                        and tabGui.modelLoaded:
-                    rootGui.checkFrame = image
-
-                    imageCount = 0
-                    detectionCount += 1
-                    tabGui.ourModel.makePrediction(check_frame=rootGui.checkFrame)
-
-                    if rootGui.debug.get():
-                        rootGui.debugWindow.logText(LogInfo.debug.value,
-                                                    "Got prediction {}".format(tabGui.ourModel.results[0]))
-
-                    print("Sending command {}".format(tabGui.ourModel.results[0]))
-                    commands.send(('{0}\n'.format(tabGui.ourModel.results[0])).encode('utf-8'))
-
-                if detectionCount >= 12:
-                    detectionPerformed = False
+                print(tabGui.gotPrediction.value)
+                if tabGui.gotPrediction.value == 1:
+                    objResult = tabGui.objResults.value.decode()
+                    print("Sending command {}".format(tabGui.results.value.decode()))
+                    commands.send(('{}{}\n'.format(objResult, tabGui.results.value.decode()).encode('utf-8')))
+                    tabGui.gotPrediction.value = 0
 
 
 class Server:

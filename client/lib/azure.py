@@ -22,8 +22,6 @@ class CarObjectDetection:
                                                         credentials=self.__credentials)
 
     def getPrediction(self):
-        self.checkImage.save('image.jpg')
-
         if os.path.exists('image.jpg'):
             with open('image.jpg', mode="rb") as test_data:
                 self.results = self.__predictor.detect_image('85177bf1-b325-4299-868e-e45f80a62bc4',
@@ -48,4 +46,3 @@ class CarObjectDetection:
         except AttributeError:
             pass
 
-        print(self.results_list)

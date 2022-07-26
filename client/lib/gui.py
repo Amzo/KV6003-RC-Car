@@ -29,6 +29,7 @@ class Gui(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
+        self.loadingImage = False
         self.frameCount = 0
         self.ts = None
         self.piWindow = None
@@ -42,6 +43,7 @@ class Gui(threading.Thread):
         self.debug = None
         self.model = None
         self.modelLoaded = None
+        self.newFrame = False
 
         # Frame data for each widget
         self.imgFrame = None
@@ -94,6 +96,7 @@ class Gui(threading.Thread):
         self.tabsObjects.tabControl.bind('<<NotebookTabChanged>>', self.tabChanged)
         self.rootWindow.protocol("WM_DELETE_WINDOW", self.onClosing)
 
+        self.updateWindow()
         self.rootWindow.mainloop()
 
     def onClosing(self):
@@ -109,6 +112,16 @@ class Gui(threading.Thread):
         self.tab = event.widget.tab('current')['text']
 
     def updateWindow(self):
-        self.predictTab.videoPredLabel.configure(image=self.predFrame)
+        if self.newFrame:
+            self.imgFrame = self.checkFrame
+
+            if not os.path.exists('image.jpg'):
+                print('saving')
+                self.predFrame.save('image.jpg')
+
+            self.predictTab.videoPredLabel.configure(image=self.imgFrame)
+            self.newFrame = False
+
+        self.rootWindow.after(1, self.updateWindow)
 
 

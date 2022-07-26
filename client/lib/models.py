@@ -1,3 +1,5 @@
+import multiprocessing
+
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -7,7 +9,7 @@ from keras.callbacks import ReduceLROnPlateau
 from keras.layers import Lambda, Conv2D, Flatten, Dense, Dropout
 from keras.layers.preprocessing.image_preprocessing import RandomBrightness, RandomFlip
 
-from client.lib.debug import LogInfo
+from lib.debug import LogInfo
 
 
 class CustomModel(tf.keras.callbacks.Callback):
@@ -16,6 +18,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         self.xTest = None
         self.xTrain = None
         self.model = None
+        self.prediction = multiprocessing.Value('b', False)
         self.rootWindow = root_window
 
     def on_epoch_end(self, epoch, logs=None):
@@ -35,7 +38,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         self.rootWindow.trainTab.progressValue.set(epoch * updateValue)
 
     def makePrediction(self, check_frame=None):
-        class_names = ['a', 'w', 'd']
+        class_names = ['a', 'd', 'w']
         if self.rootWindow.predictTab.selectedModel.get() == "CNN":
             if self.rootWindow.debug.get():
                 self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Getting CNN Prediction")
@@ -45,8 +48,7 @@ class CustomModel(tf.keras.callbacks.Callback):
             img_array = tf.expand_dims(img_array, 0)
             prediction = self.model.predict(img_array)
 
-            print(class_names[np.argmax(prediction)])
-            self.results = class_names[np.argmax(prediction)]
+            return class_names[np.argmax(prediction)]
 
     def train(self):
         self.xTrain = tf.keras.utils.image_dataset_from_directory(
@@ -68,7 +70,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=self.rootWindow.trainTab.modelSaveLocation.get())
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
 
-        opt = tf.keras.optimizers.Adam(learning_rate=0.0001, epsilon=1e-8, beta_1=0.9, beta_2=0.999)
+        opt = tf.keras.optimizers.Adam(learning_rate=0.0010) #, epsilon=1e-8, beta_1=0.9, beta_2=0.999)
 
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             self.rootWindow.trainTab.modelSaveLocation.get() + '/' + 'model.h5',
@@ -137,7 +139,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         self.rootWindow.trainTab.f1.set(round(f1Score, 2))
 
     def loadModel(self):
-        self.model = tf.keras.models.load_model(f'{self.rootWindow.predictTab.modelLocation.get()}/model_1.h5')
+        self.model = tf.keras.models.load_model(f'{self.rootWindow.predictTab.modelLocation.get()}/model.h5')
 
     def createModel(self):
         if self.rootWindow.debug.get():
