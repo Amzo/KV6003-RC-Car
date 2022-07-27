@@ -22,43 +22,40 @@ def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection):
         aiKey = ''.join(streamConnection.commands).split()
         try:
             aiKey = aiKey[0]
-            print(aiKey)
+            pred = list(aiKey)
         except IndexError:
             # client side might still be processing
             pass
 
-        if aiKey in ["l", "c", "t", "r"] and rcDistance.distance < 0.30:
-            if aiKey == "r":
+        if rcDistance.distance < 0.30:
+            if pred[0] == "r":
                 rcCar.turn_right_90()
-            elif aiKey == "l":
+            elif pred[0] == "l":
                 rcCar.turn_left_90()
-            else:
+            elif pred[0] == "t":
                 print(f'Stopping because of stop sign and Ditance is {rcDistance.distance}')
                 rcCar.release()
-        elif aiKey in ["l", "c", "t", "r"] and rcDistance.distance > 0.30:
-            time.sleep(0.5)
-            rcCar.move_forward()
         else:
-            if aiKey == "w":
+            if pred[1] == "w":
                 print("moving forward")
                 rcCar.move_forward()
-            elif aiKey == "a":
+            elif pred[1] == "a":
                 rcCar.turn_left()
-            elif aiKey == "d":
+            elif pred[1] == "d":
                 rcCar.turn_right()
-            elif aiKey == "s":
+            elif pred[1] == "s":
                 rcCar.move_backwards()
-            elif aiKey == "q":
+            elif pred[1] == "q":
                 rcCar.turn_left_90()
-            elif aiKey == "e":
+            elif pred[1] == "e":
                 rcCar.turn_right_90()
-            elif aiKey == "i":
+            elif pred[1] == "i":
                 servoUpDown.turn_motor(-10)
-            elif aiKey == "k":
+            elif pred[1] == "k":
                 servoUpDown.turn_motor(+10)
-            elif aiKey == "j":
+            elif pred[1] == "j":
                 servoLeftRight.turn_motor(10)
-            elif aiKey == "l":
+            elif pred[1] == "l":
                 servoLeftRight.turn_motor(-10)
             else:
                 rcCar.release()
