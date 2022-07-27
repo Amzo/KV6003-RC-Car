@@ -14,12 +14,15 @@ import pygame
 import lib.directory as myDir
 
 
-def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection):
+def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, rcDistance2, streamConnection):
     while loop:
         print("Getting command")
         streamConnection.getCommand()
         # ignore empty strings in the data stream
         aiKey = ''.join(streamConnection.commands).split()
+        print(f'Distance sensor1 is reading{rcDistance.distance}')
+        print(f'Distance sensor2 is reading {rcDistance2.distance}')
+
         try:
             aiKey = aiKey[0]
             pred = list(aiKey)

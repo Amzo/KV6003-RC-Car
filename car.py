@@ -31,6 +31,7 @@ servoUpDown = carSetup.Servo(5, 10)
 
 # initialize distance setting
 rcDistance = DistanceSensor(echo=4, trigger=27)
+rcDistance2 = DistanceSensor(echo=22, trigger=17)
 
 # Add the arguments
 carParser = argparse.ArgumentParser(description='Flexible control for RC car')
@@ -72,7 +73,7 @@ if __name__ == '__main__':
                 controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
         elif args.controller[0] == 'ai':
             streamConnection = network.start_connection()
-            controller.ai(True, rcCar, servoUpDown, servoLeftRight, rcDistance, streamConnection)
+            controller.ai(True, rcCar, servoUpDown, servoLeftRight, rcDistance, rcDistance2, streamConnection)
         else:
             carParser.print_help()
             quit(1)
