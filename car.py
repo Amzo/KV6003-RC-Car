@@ -1,21 +1,19 @@
 #!/usr/bin/env python
-import lib.carSetup as carSetup
-import lib.cameraModule as cameraModule
-import lib.controller as controller
-import lib.network as network
-
 # argument parsing
 import argparse
-
 # configuration parsing
 import configparser
 
-# profiling to find bottleneck
-import cProfile
-
+from gpiozero import Device, DistanceSensor
 # setup pin factory for all devices, default to pigpio to minimize stutter from software PWM
 from gpiozero.pins.pigpio import PiGPIOFactory
-from gpiozero import Device, DistanceSensor
+
+import lib.cameraModule as cameraModule
+import lib.carSetup as carSetup
+import lib.controller as controller
+import lib.network as network
+
+# profiling to find bottleneck
 
 Device.pin_factory = PiGPIOFactory()
 
@@ -67,8 +65,6 @@ if __name__ == '__main__':
         if args.controller[0] == 'manual':
             try:
                 carCamera = cameraModule.CarCamera()
-            #except:
-            #    print("Issues initializing pi camera")
             finally:
                 controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
         elif args.controller[0] == 'ai':

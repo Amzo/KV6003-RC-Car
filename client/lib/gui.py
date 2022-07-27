@@ -3,13 +3,7 @@ import glob
 import os
 import threading
 import tkinter as tk
-from io import BytesIO
-from os.path import exists
 from tkinter import ttk, StringVar
-
-import cv2
-import numpy as np
-from PIL import Image, ImageTk
 
 from lib import predictTab, menuBar, debug, trainTab
 

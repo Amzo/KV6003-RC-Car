@@ -70,7 +70,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=self.rootWindow.trainTab.modelSaveLocation.get())
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
 
-        opt = tf.keras.optimizers.Adam(learning_rate=0.0010) #, epsilon=1e-8, beta_1=0.9, beta_2=0.999)
+        opt = tf.keras.optimizers.Adam(learning_rate=0.0010)  # , epsilon=1e-8, beta_1=0.9, beta_2=0.999)
 
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             self.rootWindow.trainTab.modelSaveLocation.get() + '/' + 'model.h5',

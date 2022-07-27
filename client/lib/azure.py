@@ -2,9 +2,6 @@
 import configparser
 import os
 
-import cv2
-import numpy as np
-from PIL.ImageDraw import ImageDraw
 from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
 from msrest.authentication import ApiKeyCredentials
 
@@ -18,7 +15,8 @@ class CarObjectDetection:
         self.checkImage = None
 
         self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": "24072118e84c4da88f7f4c87c93c2317"})
-        self.__predictor = CustomVisionPredictionClient(endpoint='https://signdetection-prediction.cognitiveservices.azure.com/',
+        self.__predictor = CustomVisionPredictionClient(endpoint='https://signdetection-prediction.cognitiveservices'
+                                                                 '.azure.com/',
                                                         credentials=self.__credentials)
 
     def getPrediction(self):
@@ -45,4 +43,3 @@ class CarObjectDetection:
                         self.results_list.append("t")
         except AttributeError:
             pass
-

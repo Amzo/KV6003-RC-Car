@@ -19,12 +19,12 @@ for filename in os.listdir(directory):
     img = cv2.imread(i)
     kernel = np.ones((5, 5), np.uint8)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    #image = cv2.GaussianBlur(hsv, (3, 3), sigmaX=0, sigmaY=0)
+    # image = cv2.GaussianBlur(hsv, (3, 3), sigmaX=0, sigmaY=0)
 
     Lower_hsv = np.array([120, 120, 120])
     Upper_hsv = np.array([160, 170, 180])
 
-    #sobelxy = cv2.Sobel(src=image, ddepth=cv2.CV_32F, dx=1, dy=1, ksize=3)
+    # sobelxy = cv2.Sobel(src=image, ddepth=cv2.CV_32F, dx=1, dy=1, ksize=3)
     Mask = cv2.inRange(img, Lower_hsv, Upper_hsv)
 
     mask_yellow = cv2.bitwise_not(Mask)
@@ -43,4 +43,4 @@ for filename in os.listdir(directory):
     if not os.path.exists(f'{directory}/sobel'):
         os.mkdir(f'{directory}/sobel')
 
-    #cv2.imwrite(f'{directory}/sobel/{filename}', sobelxy)
+    # cv2.imwrite(f'{directory}/sobel/{filename}', sobelxy)

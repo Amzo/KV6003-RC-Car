@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import time
-from cython.parallel import parallel, prange
 
 try:
     from gpiozero import Motor, AngularServo
