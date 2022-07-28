@@ -5,6 +5,9 @@ import threading
 import tkinter as tk
 from tkinter import ttk, StringVar
 
+import numpy as np
+from PIL import ImageTk, ImageDraw, Image
+
 from lib import predictTab, menuBar, debug, trainTab
 
 
@@ -109,9 +112,30 @@ class Gui(threading.Thread):
         if self.newFrame:
             self.imgFrame = self.checkFrame
 
+            # keep two copies one for prediction, one for azure, to avoid threads causing conflicts, or waiting for each
+            # other to finish processing / writing / removing
             if not os.path.exists('image.jpg'):
-                print('saving')
                 self.predFrame.save('image.jpg')
+
+            if not os.path.exists('image1.jpg'):
+                self.predFrame.save('image1.jpg')
+
+            # if a bounding boxed image exists, display that in window, then remove it so a new bounding box image is
+            # created.
+            #print(len(self.predictTab.boxList))
+            print(f'in gui {self.predictTab.boxList}')
+            if os.path.exists('imageBox.jpg'):
+                self.imgFrame = ImageTk.PhotoImage(file='imageBox.jpg')
+                os.remove('imageBox.jpg')
+            elif len(self.predictTab.boxList) > 0:
+                print("Appling previous bounding box")
+                draw = ImageDraw.Draw(self.predFrame)
+                lineWidth = int(np.array(self.predFrame).shape[1] / 100)
+
+                for x in range(0, len(self.predictTab.boxList)):
+                    draw.line(self.predictTab.boxList[x], fill=self.colour[x], width=lineWidth)
+
+                self.imgFrame = ImageTk.PhotoImage(image=Image.fromarray(self.predFrame))
 
             self.predictTab.videoPredLabel.configure(image=self.imgFrame)
             self.newFrame = False

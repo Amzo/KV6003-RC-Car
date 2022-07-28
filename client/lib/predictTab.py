@@ -7,7 +7,8 @@ from functools import partial
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
-from PIL import Image
+import numpy as np
+from PIL import Image, ImageDraw, UnidentifiedImageError
 
 from lib import piWindow
 from lib import server as ourServer
@@ -23,6 +24,8 @@ class PredictTab:
         self.imageCount = multiprocessing.Value('i', 0)
         self.results = multiprocessing.Value('c', b't')
         self.gotPrediction = multiprocessing.Value('i', 0)
+        self.manager = multiprocessing.Manager()
+        self.boxList = self.manager.list([])
         self.results_list = None
         self.ourModel = OurModels.CustomModel(root_window=master)
         self.model = None
@@ -107,14 +110,21 @@ class PredictTab:
         self.modelLoaded.value = True
 
         while True:
-            if self.imageCount.value >= 12 and self.modelLoaded.value:
+            if os.path.exists('image1.jpg'):
+                try:
+                    im = Image.open('image1.jpg')
+                except UnidentifiedImageError:
+                    # image hasn't finished saving?
+                    pass
+                finally:
+                    carObjectDetect.getPrediction()
+                    self.boxList, self.objResults.value = carObjectDetect.filterResults(im)
+                    print(f'in predict process {self.boxList}')
+                    os.remove('image1.jpg')
+
+            if self.imageCount.value >= 12:
                 if os.path.exists('image.jpg'):
                     im = Image.open(r"image.jpg")
-
-                carObjectDetect.getPrediction()
-                carObjectDetect.filterResults()
-                for x in carObjectDetect.results_list:
-                    self.objResults = str.encode(x)
 
                 if self.gotPrediction.value == 0:
                     if not self.stop:
@@ -152,4 +162,3 @@ class PredictTab:
 
         ps = multiprocessing.Process(target=self.predictionThread)
         ps.start()
-

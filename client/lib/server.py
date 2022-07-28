@@ -37,14 +37,13 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
                 # is being fetched
                 if not rootGui.newFrame:
                     rootGui.checkFrame = ImageTk.PhotoImage(image=Image.fromarray(imageRGB))
-                    rootGui.predFrame = Image.fromarray(image)
+                    rootGui.predFrame = Image.fromarray(imageRGB)
                     tabGui.imageCount.value += 1
                     rootGui.newFrame = True
 
-                print(tabGui.gotPrediction.value)
                 if tabGui.gotPrediction.value == 1:
                     objResult = tabGui.objResults.value.decode()
-                    print("Sending command {}".format(tabGui.results.value.decode()))
+                    #print("Sending command {}".format(tabGui.results.value.decode()))
                     commands.send(('{}{}\n'.format(objResult, tabGui.results.value.decode()).encode('utf-8')))
                     tabGui.gotPrediction.value = 0
 
