@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 import glob
+import hashlib
 import os
+import pickle
 import threading
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk, StringVar
 
 import numpy as np
-from PIL import ImageTk, ImageDraw, Image
+from PIL import ImageTk, ImageDraw, Image, UnidentifiedImageError, ImageFont
 
+from lib.debug import LogInfo
 from lib import predictTab, menuBar, debug, trainTab
+from filelock import FileLock
 
 
 class TabWidget:
@@ -41,6 +46,13 @@ class Gui(threading.Thread):
         self.model = None
         self.modelLoaded = None
         self.newFrame = False
+        self.boxList = []
+        if not os.path.exists('box.pkl'):
+            self.hash = 1
+        else:
+            with open('box.pkl', 'rb') as f:
+                self.hash = hashlib.md5(f.read()).hexdigest()
+        self.passed = False
 
         # Frame data for each widget
         self.imgFrame = None
@@ -120,26 +132,44 @@ class Gui(threading.Thread):
             if not os.path.exists('image1.jpg'):
                 self.predFrame.save('image1.jpg')
 
-            # if a bounding boxed image exists, display that in window, then remove it so a new bounding box image is
-            # created.
-            #print(len(self.predictTab.boxList))
-            print(f'in gui {self.predictTab.boxList}')
-            if os.path.exists('imageBox.jpg'):
-                self.imgFrame = ImageTk.PhotoImage(file='imageBox.jpg')
-                os.remove('imageBox.jpg')
-            elif len(self.predictTab.boxList) > 0:
-                print("Appling previous bounding box")
-                draw = ImageDraw.Draw(self.predFrame)
-                lineWidth = int(np.array(self.predFrame).shape[1] / 100)
+            elif os.path.exists('box.pkl'):
+                if not os.path.exists('filelock'):
+                    Path('filelock').touch()
+                    if self.debug:
+                        self.debugWindow.logText(LogInfo.debug.value, 'File is locked (GUI process)')
+                    with open('box.pkl', 'rb') as file:
+                        hash = hashlib.md5(file.read()).hexdigest()
 
-                for x in range(0, len(self.predictTab.boxList)):
-                    draw.line(self.predictTab.boxList[x], fill=self.colour[x], width=lineWidth)
+                        # reload changed file
+                    if self.hash != hash:
+                        try:
+                            with open('box.pkl', 'rb') as file:
+                                boxList = pickle.load(file)
+                        except AttributeError as e:
+                            print(e)
+                            self.passed = False
+                        else:
+                            self.boxList = boxList
+                            self.passed = True
+                            self.hash = hash
+                    os.remove('filelock')
+                    if self.debug:
+                        self.debugWindow.logText(LogInfo.debug.value, 'filelock is removed (GUI Process)')
 
-                self.imgFrame = ImageTk.PhotoImage(image=Image.fromarray(self.predFrame))
+                if self.passed or len(self.boxList) > 0:
+                    draw = ImageDraw.Draw(self.predFrame)
+                    lineWidth = int(np.array(self.predFrame).shape[1] / 100)
+                    fnt = ImageFont.truetype("./data/arial.ttf", 12)
+
+                    for x in range(0, len(self.boxList)):
+                        draw.line(self.boxList[x][0:5], fill=self.boxList[x][-3], width=lineWidth)
+                        draw.text(self.boxList[x][0],
+                                  self.boxList[x][-2] + ": {0:.2f}%".format(self.boxList[x][-1] * 100),
+                                  font=fnt, fill=self.boxList[x][-3])
+
+                    self.imgFrame = ImageTk.PhotoImage(image=self.predFrame)
 
             self.predictTab.videoPredLabel.configure(image=self.imgFrame)
             self.newFrame = False
 
         self.rootWindow.after(1, self.updateWindow)
-
-

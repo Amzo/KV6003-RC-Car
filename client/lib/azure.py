@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import configparser
 import os
+import pickle
+from pathlib import Path
 
 import PIL
 import numpy as np
@@ -8,6 +10,7 @@ from PIL import ImageDraw, Image, ImageFont
 
 from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
 from azure.cognitiveservices.vision.customvision.prediction.models import CustomVisionErrorException
+from filelock import FileLock
 from matplotlib import pyplot as plt
 from msrest.authentication import ApiKeyCredentials
 
@@ -58,51 +61,44 @@ class CarObjectDetection:
             height = prediction.bounding_box.height * test_img_h
             width = prediction.bounding_box.width * test_img_w
 
-            self.colour.append(color)
             self.box_list.append(((left, top), (left + width, top), (left + width, top + height), (left, top + height),
-                                  (left, top)))
-            self.tag_name.append(prediction.tag_name)
+                                  (left, top), color, prediction.tag_name, prediction.probability))
 
     def filterResults(self, test_img):
         try:
             # erase previous bounding boxes
             self.box_list = []
-            self.colour = []
-            self.tag_name = []
 
             for prediction in self.results.predictions:
                 if (prediction.probability * 100) > 70:
                     # bounding box
                     self.getBoundingBox(prediction, test_img)
 
-            if len(self.box_list) > 0:
-                draw = ImageDraw.Draw(test_img)
-                lineWidth = int(np.array(test_img).shape[1] / 100)
-                fnt = ImageFont.truetype("./data/arial.ttf", 12)
+            # shared memory in python can be os dependant, I can't be certain shared objects between memory
+            # will work on my Windows laptop for demonstration as all testing is done on My linux machine.
+            # to share a list between processes, as multiprocessing wasn't in the original design
+            # pickle it and reload it in the other process at the cost of overhead
 
-                for x in range(0, len(self.box_list)):
-                    draw.line(self.box_list[x], fill=self.colour[x], width=lineWidth)
-                    draw.text(self.box_list[x][0], self.tag_name[x] + ": {0:.2f}%".format(prediction.probability * 100),
-                              font=fnt, fill=self.colour[x])
-
-                    # ensure previous one has been loaded and removed
-                if not os.path.exists('imageBox.jpg'):
-                    test_img.save('imageBox.jpg')
+            if not os.path.exists('filelock'):
+                # lock the file
+                Path('filelock').touch()
+                print('file is locked. dumping lists (azure process)')
+                with open('box.pkl', 'wb') as file:
+                    pickle.dump(self.box_list, file)
+                os.remove('filelock')
+                print('file is unlocked azure process')
 
             for prediction in self.results.predictions:
                 # commands to send to raspberry pi on detection
                 if prediction.tag_name == "car":
-                    return self.box_list, str.encode("c")
+                    return str.encode("c")
                 elif prediction.tag_name == "Left":
-                    return self.box_list, str.encode("l")
+                    return str.encode("l")
                 elif prediction.tag_name == "Right":
-                    return self.box_list, str.encode("r")
+                    return str.encode("r")
                 elif prediction.tag_name == "person":
-                    return self.box_list, str.encode("p")
+                    return str.encode("p")
                 elif prediction.tag_name == "stop":
-                    return self.box_list, str.encode("t")
-        except TypeError:
-            return str.encode("z")
-        else:
-            # fall back, no object detection yet
-            return str.encode("z")
+                    return str.encode("t")
+        except OSError as exc:
+            print(exc)

@@ -24,8 +24,6 @@ class PredictTab:
         self.imageCount = multiprocessing.Value('i', 0)
         self.results = multiprocessing.Value('c', b't')
         self.gotPrediction = multiprocessing.Value('i', 0)
-        self.manager = multiprocessing.Manager()
-        self.boxList = self.manager.list([])
         self.results_list = None
         self.ourModel = OurModels.CustomModel(root_window=master)
         self.model = None
@@ -118,8 +116,7 @@ class PredictTab:
                     pass
                 finally:
                     carObjectDetect.getPrediction()
-                    self.boxList, self.objResults.value = carObjectDetect.filterResults(im)
-                    print(f'in predict process {self.boxList}')
+                    self.objResults.value = carObjectDetect.filterResults(im)
                     os.remove('image1.jpg')
 
             if self.imageCount.value >= 12:
