@@ -135,8 +135,6 @@ class Gui(threading.Thread):
             elif os.path.exists('box.pkl'):
                 if not os.path.exists('filelock'):
                     Path('filelock').touch()
-                    if self.debug:
-                        self.debugWindow.logText(LogInfo.debug.value, 'File is locked (GUI process)')
                     with open('box.pkl', 'rb') as file:
                         hash = hashlib.md5(file.read()).hexdigest()
 
@@ -153,8 +151,6 @@ class Gui(threading.Thread):
                             self.passed = True
                             self.hash = hash
                     os.remove('filelock')
-                    if self.debug:
-                        self.debugWindow.logText(LogInfo.debug.value, 'filelock is removed (GUI Process)')
 
                 if self.passed or len(self.boxList) > 0:
                     draw = ImageDraw.Draw(self.predFrame)

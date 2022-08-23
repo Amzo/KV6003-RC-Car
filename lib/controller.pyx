@@ -15,28 +15,43 @@ import lib.directory as myDir
 
 
 def ai(loop, rcCar, servoUpDown, servoLeftRight, rcDistance, rcDistance2, streamConnection):
+    prevKey = []
     while loop:
         print("Getting command")
+        if len(prevKey) >= 5:
+            prevKey = []
         streamConnection.getCommand()
         # ignore empty strings in the data stream
         aiKey = ''.join(streamConnection.commands).split()
-        print(f'Distance sensor1 is reading{rcDistance.distance}')
+        print(f'Distance sensor1 is reading {rcDistance.distance}')
         print(f'Distance sensor2 is reading {rcDistance2.distance}')
 
         try:
             aiKey = aiKey[0]
             pred = list(aiKey)
+            print(pred)
         except IndexError:
             # client side might still be processing
             pass
 
-        if rcDistance.distance < 0.30:
+        if rcDistance.distance < 0.30 or rcDistance2.distance < 0.30:
+            print(f'Got: {pred[0]}')
             if pred[0] == "r":
-                rcCar.turn_right_90()
+                prevKey.append(1)
+                if len(prevKey) == 5 and max(prevKey,key=prevKey.count) == 1:
+                    rcCar.turn_right_90()
             elif pred[0] == "l":
-                rcCar.turn_left_90()
+                prevKey.append(0)
+                if len(prevKey) == 5 and max(prevKey, key=prevKey.count) == 0:
+                    rcCar.turn_left_90()
             elif pred[0] == "t":
-                print(f'Stopping because of stop sign and Ditance is {rcDistance.distance}')
+                print(f'Stop sign at a distance of {rcDistance2.distance * 100}cm')
+                rcCar.release()
+            elif pred[0] == "p":
+                print(f'Pedestrian at a Distance of {rcDistance2.distance * 100}cm')
+                rcCar.release()
+            elif pred[0] == "c":
+                print(f'Car at a Distance is {rcDistance2.distance * 100}')
                 rcCar.release()
         else:
             if pred[1] == "w":
@@ -125,9 +140,11 @@ def keyboard(loop, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, da
             rcCar.turn_right_90()
             carCamera.prevKey = 0.50
         elif keys[pygame.K_q]:
-            rcCar.turn_left_90()
+            capture(pygame.K_q)
+            #rcCar.turn_left_90()
             carCamera.prevKey = 0.60
         elif keys[pygame.K_t]:
+             capture(pygame.K_t)
              rcCar.release()
              carCamera.prevKey = 0.70
         elif keys[pygame.K_z]:

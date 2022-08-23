@@ -9,6 +9,9 @@ def cleanup():
         os.remove('filelock')
 
 
+# make sure no files remain from previous run if it ended without cleaning
+cleanup()
+
 ourGUI = gui.Gui()
 # ourGUI.updateWindow()
 threadRunning = True

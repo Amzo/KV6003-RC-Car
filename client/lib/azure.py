@@ -26,7 +26,7 @@ class CarObjectDetection:
         self.config.read('../config/config.ini')
         self.checkImage = None
 
-        self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": ""})
+        self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": "2f62dc5740494b0bbbe51a4f3deaae3d"})
         self.__predictor = CustomVisionPredictionClient(endpoint='https://signdetection-prediction.cognitiveservices'
                                                                  '.azure.com/',
                                                         credentials=self.__credentials)
@@ -36,12 +36,14 @@ class CarObjectDetection:
             with open('image1.jpg', mode="rb") as test_data:
                 try:
                     self.results = self.__predictor.detect_image('85177bf1-b325-4299-868e-e45f80a62bc4',
-                                                                 'Iteration7',
+                                                                 'Iteration9',
                                                                  test_data)
                 except CustomVisionErrorException:
                     # bad image stream
                     # skip this error
                     pass
+
+            os.remove('image1.jpg')
 
     def getBoundingBox(self, prediction, test_img):
         test_img_h, test_img_w, test_img_ch = np.array(test_img).shape
@@ -65,28 +67,35 @@ class CarObjectDetection:
                                   (left, top), color, prediction.tag_name, prediction.probability))
 
     def filterResults(self, test_img):
-        try:
-            # erase previous bounding boxes
-            self.box_list = []
+        # erase previous bounding boxes
+        self.box_list = []
 
+        try:
             for prediction in self.results.predictions:
-                if (prediction.probability * 100) > 70:
+                if (prediction.probability * 100) > 75:
                     # bounding box
                     self.getBoundingBox(prediction, test_img)
+            azurePrediction = True
+        except AttributeError:
+            azurePrediction = False
 
-            # shared memory in python can be os dependant, I can't be certain shared objects between memory
-            # will work on my Windows laptop for demonstration as all testing is done on My linux machine.
-            # to share a list between processes, as multiprocessing wasn't in the original design
-            # pickle it and reload it in the other process at the cost of overhead
+        # shared memory in python can be os dependant, I can't be certain shared objects between memory
+        # will work on my Windows laptop for demonstration as all testing is done on My linux machine.
+        # to share a list between processes, as multiprocessing wasn't in the original design
+        # pickle it and reload it in the other process at the cost of overhead
 
+        print(azurePrediction)
+        if azurePrediction:
             if not os.path.exists('filelock'):
                 # lock the file
                 Path('filelock').touch()
-                print('file is locked. dumping lists (azure process)')
+
                 with open('box.pkl', 'wb') as file:
                     pickle.dump(self.box_list, file)
-                os.remove('filelock')
-                print('file is unlocked azure process')
+                try:
+                    os.remove('filelock')
+                except FileNotFoundError:
+                    pass
 
             for prediction in self.results.predictions:
                 # commands to send to raspberry pi on detection
@@ -100,5 +109,8 @@ class CarObjectDetection:
                     return str.encode("p")
                 elif prediction.tag_name == "stop":
                     return str.encode("t")
-        except OSError as exc:
-            print(exc)
+                else:
+                    return str.encode("z")
+
+        # we got this far
+        return str.encode("z")

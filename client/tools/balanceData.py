@@ -13,7 +13,7 @@ Tk().withdraw()
 filename = askdirectory()
 
 
-def getFileCount():
+def getFileCount(filename):
     files = next(os.walk(filename))[2]
     return len(files)
 
@@ -56,13 +56,14 @@ def add_noise(img):
 
 
 # make them up to 12,000 images each
-count = 12000 - getFileCount()
+count = 3000 - getFileCount(filename)
+print("Done")
 
 for x in range(1, count + 1):
     image = None
     saveFile = None
     while image is None:
-        y = random.randint(1, getFileCount())
+        y = random.randint(24, 7210)
         imageFile = f'{filename}/image{y}.jpg'
         if os.path.exists(imageFile):
             image = cv2.imread(imageFile)

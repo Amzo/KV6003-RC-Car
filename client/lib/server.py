@@ -3,6 +3,8 @@ import shutil
 import socket
 import socketserver
 import struct
+from tkinter import messagebox
+
 import cv2
 import pandas as pd
 from PIL import Image, ImageTk
@@ -43,7 +45,7 @@ class VideoStreamHandler(socketserver.StreamRequestHandler):
 
                 if tabGui.gotPrediction.value == 1:
                     objResult = tabGui.objResults.value.decode()
-                    #print("Sending command {}".format(tabGui.results.value.decode()))
+                    print("Sending command {}".format(tabGui.results.value.decode()))
                     commands.send(('{}{}\n'.format(objResult, tabGui.results.value.decode()).encode('utf-8')))
                     tabGui.gotPrediction.value = 0
 
@@ -59,11 +61,15 @@ class Server:
         self.commandSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def video_stream(self, videostream):
-        self.clientSocket.connect((self.host, self.port))
-        self.commandSocket.connect((self.host, 8080))
+        try:
+            self.clientSocket.connect((self.host, self.port))
+        except OSError:
+            messagebox.showwarning('Warning', 'Failed to connect to host')
+        else:
+            self.commandSocket.connect((self.host, 8080))
 
-        self.connectFlag = True
-        videostream.handle(self, self.clientSocket, self.commandSocket, self.tabs, self.rootGui)
+            self.connectFlag = True
+            videostream.handle(self, self.clientSocket, self.commandSocket, self.tabs, self.rootGui)
 
     def is_valid(self, buf):
         byteValid = True

@@ -29,10 +29,10 @@ class TrainTab:
         # placement for precision under text box
         self.placement = (570 / 2.3)
 
-        self.cnnFrame = tk.LabelFrame(tabs.tab2, text="CNN", height=300, width=250)
+        self.cnnFrame = tk.LabelFrame(tabs.tab2, text="CNN", height=355, width=250)
 
         self.outputWindowLabel = tk.Label(tabs.tab2, text="Learning Output:", font="Helvetica 10 bold")
-        self.outputText = scrolledtext.ScrolledText(tabs.tab2, height=20, width=70, state=tk.DISABLED)
+        self.outputText = scrolledtext.ScrolledText(tabs.tab2, height=20, width=76, state=tk.DISABLED)
         self.accuracyLabel = tk.Label(tabs.tab2, text="Learning Accuracy:", font="Helvetica 10 bold")
         self.precisionLabel = tk.Label(tabs.tab2, text="Precision:", font="Helvetica 10 bold")
         self.precisionTxt = tk.Label(tabs.tab2, textvariable=self.precision, font="Helvetica 10 bold")
@@ -68,26 +68,26 @@ class TrainTab:
     def placeWidgets(self):
         self.outputWindowLabel.place(x=65, y=10, anchor=tk.CENTER)
         self.outputText.place(x=10, y=30)
-        self.accuracyLabel.place(x=10, y=360)
-        self.precisionLabel.place(x=10, y=390)
-        self.precisionTxt.place(x=10, y=420)
-        self.recallLabel.place(x=10 + self.placement, y=390)
-        self.recallTxt.place(x=10 + self.placement, y=420)
-        self.F1Label.place(x=10 + self.placement * 2, y=390)
-        self.F1Txt.place(x=10 + self.placement * 2, y=420)
+        self.accuracyLabel.place(x=10, y=370)
+        self.precisionLabel.place(x=10, y=400)
+        self.precisionTxt.place(x=10, y=430)
+        self.recallLabel.place(x=10 + self.placement, y=400)
+        self.recallTxt.place(x=10 + self.placement, y=430)
+        self.F1Label.place(x=10 + self.placement * 2, y=400)
+        self.F1Txt.place(x=10 + self.placement * 2, y=430)
 
         # data input for training
         self.cnnFrame.place(x=600, y=20)
         self.imageInputLabel.place(x=self.rootWindow.centerTrain, y=50, anchor=tk.CENTER)
-        self.imageInputText.place(x=self.rootWindow.centerTrain, y=80, anchor=tk.CENTER)
-        self.imageFolderButton.place(x=self.rootWindow.centerTrain, y=110, anchor=tk.CENTER)
-        self.modelLocationLbl.place(x=self.rootWindow.centerTrain, y=140, anchor=tk.CENTER)
-        self.modelLocation.place(x=self.rootWindow.centerTrain, y=170, anchor=tk.CENTER)
-        self.modelButton.place(x=self.rootWindow.centerTrain, y=200, anchor=tk.CENTER)
-        self.epochLabel.place(x=self.rootWindow.centerTrain, y=230, anchor=tk.E)
-        self.epochInput.place(x=self.rootWindow.centerTrain, y=230, anchor=tk.W)
-        self.progressbar.place(x=self.rootWindow.centerTrain, y=260, anchor=tk.CENTER)
-        self.trainButton.place(x=self.rootWindow.centerTrain, y=290, anchor=tk.CENTER)
+        self.imageInputText.place(x=self.rootWindow.centerTrain, y=90, anchor=tk.CENTER)
+        self.imageFolderButton.place(x=self.rootWindow.centerTrain, y=130, anchor=tk.CENTER)
+        self.modelLocationLbl.place(x=self.rootWindow.centerTrain, y=170, anchor=tk.CENTER)
+        self.modelLocation.place(x=self.rootWindow.centerTrain, y=210, anchor=tk.CENTER)
+        self.modelButton.place(x=self.rootWindow.centerTrain, y=250, anchor=tk.CENTER)
+        self.epochLabel.place(x=self.rootWindow.centerTrain, y=290, anchor=tk.E)
+        self.epochInput.place(x=self.rootWindow.centerTrain, y=290, anchor=tk.W)
+        self.progressbar.place(x=self.rootWindow.centerTrain, y=320, anchor=tk.CENTER)
+        self.trainButton.place(x=self.rootWindow.centerTrain, y=350, anchor=tk.CENTER)
 
     def logText(self, log_type, msg):
         self.outputText.config(state=tk.NORMAL)
@@ -160,7 +160,7 @@ class TrainTab:
             self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Creating Xception based model")
 
         self.model = ourModels.CustomModel(root_window=self.rootWindow)
-        self.model.createModel()
+        #self.model.createModel()
 
         if self.rootWindow.debug.get():
             self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Starting training on the new thread")

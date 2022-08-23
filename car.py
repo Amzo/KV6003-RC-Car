@@ -13,23 +13,21 @@ import lib.carSetup as carSetup
 import lib.controller as controller
 import lib.network as network
 
-# profiling to find bottleneck
 
-Device.pin_factory = PiGPIOFactory()
+def setupDevice():
+    Device.pin_factory = PiGPIOFactory()
 
-config = configparser.ConfigParser()
-config.read('config/config.ini')
+    config = configparser.ConfigParser()
+    config.read('config/config.ini')
 
-##################################################
+    rcCar = carSetup.Car()
+    servoLeftRight = carSetup.Servo(12, -10)
+    servoUpDown = carSetup.Servo(5, 10)
 
-# initialize the car and servo
-rcCar = carSetup.Car()
-servoLeftRight = carSetup.Servo(12, -10)
-servoUpDown = carSetup.Servo(5, 10)
+    # initialize distance setting
+    rcDistance = DistanceSensor(echo=4, trigger=27)
+    rcDistance2 = DistanceSensor(echo=22, trigger=17)
 
-# initialize distance setting
-rcDistance = DistanceSensor(echo=4, trigger=27)
-rcDistance2 = DistanceSensor(echo=22, trigger=17)
 
 # Add the arguments
 carParser = argparse.ArgumentParser(description='Flexible control for RC car')
@@ -63,11 +61,13 @@ if __name__ == '__main__':
         quit(1)
     else:
         if args.controller[0] == 'manual':
+            setupDevice()
             try:
                 carCamera = cameraModule.CarCamera()
             finally:
                 controller.keyboard(True, rcCar, servoLeftRight, servoUpDown, rcDistance, carCamera, args)
         elif args.controller[0] == 'ai':
+            setupDevice()
             streamConnection = network.start_connection()
             controller.ai(True, rcCar, servoUpDown, servoLeftRight, rcDistance, rcDistance2, streamConnection)
         else:

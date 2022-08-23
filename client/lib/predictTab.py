@@ -53,8 +53,6 @@ class PredictTab:
         self.modelLocation = tk.StringVar(master.rootWindow)
 
         self.connectFrame = tk.LabelFrame(tabs.tab1, text="Car Connection", height=130, width=220)
-        self.objectFrame = tk.LabelFrame(tabs.tab1, text="Object Detection", height=120, width=220)
-        self.carFrame = tk.LabelFrame(tabs.tab1, text="Manual Car Control", height=110, width=220)
         self.modelFrame = tk.LabelFrame(tabs.tab1, text="Model Select", height=70, width=220)
 
         self.videoPredLabel = tk.Label(tabs.tab1, borderwidth=3)
@@ -82,24 +80,28 @@ class PredictTab:
         self.port.place(x=placement - 30, y=70, anchor=tk.W)
         self.connectButton.place(x=placement, y=110, anchor=tk.CENTER)
 
-        self.objectFrame.place(x=650, y=135)
-
-        self.carFrame.place(x=650, y=255)
-
-        self.modelFrame.place(x=650, y=365)
-        self.modelSelect.place(x=placement - 60, y=405, anchor=tk.E)
-        self.modelDropDown.place(x=placement + 20, y=405, anchor=tk.E)
-        self.modelBrowseButton.place(x=placement + 40, y=405, anchor=tk.W)
-        self.moveButton.place(x=placement, y=460, anchor=tk.CENTER)
+        self.modelFrame.place(x=650, y=235)
+        self.modelSelect.place(x=placement - 60, y=275, anchor=tk.E)
+        self.modelDropDown.place(x=placement + 20, y=275, anchor=tk.E)
+        self.modelBrowseButton.place(x=placement + 35, y=275, anchor=tk.W)
+        self.moveButton.place(x=placement, y=340, anchor=tk.CENTER)
 
     def connect(self):
         self.mainWindow = self.rootClass
-        h = str(self.hostIp.get())
-        p1 = int(self.port.get())
-        self.videoStream = ourServer.VideoStreamHandler
-        self.ts = ourServer.Server(h, p1, self, self.mainWindow)
-        T = threading.Thread(target=self.ts.run, args=(self.videoStream,), daemon=True)
-        T.start()
+        try:
+            h = str(self.hostIp.get())
+        except ValueError:
+            messagebox.showerror('Error', 'Please enter a valid IP Address')
+        else:
+            try:
+                p1 = int(self.port.get())
+            except ValueError:
+                messagebox.showerror('Error', 'Please enter a valid port')
+            else:
+                self.videoStream = ourServer.VideoStreamHandler
+                self.ts = ourServer.Server(h, p1, self, self.mainWindow)
+                T = threading.Thread(target=self.ts.run, args=(self.videoStream,), daemon=True)
+                T.start()
 
     # don't block other threads
     def predictionThread(self):
@@ -117,7 +119,6 @@ class PredictTab:
                 finally:
                     carObjectDetect.getPrediction()
                     self.objResults.value = carObjectDetect.filterResults(im)
-                    os.remove('image1.jpg')
 
             if self.imageCount.value >= 12:
                 if os.path.exists('image.jpg'):
@@ -156,6 +157,6 @@ class PredictTab:
             self.ts.connectFlag
         except AttributeError:
             messagebox.showerror('Error', 'Connect to the remote car server')
-
-        ps = multiprocessing.Process(target=self.predictionThread)
-        ps.start()
+        else:
+            ps = multiprocessing.Process(target=self.predictionThread)
+            ps.start()
