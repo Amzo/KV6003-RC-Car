@@ -65,10 +65,10 @@ Finally install the necessary packages
 pip install -r requirements.txt
 ```
 
-Finally compile the cython code
+Finally compile the cython code, a C/C++ compiler is required here, visual C++, clang or GCC will do. Installation instructions won't be provided here for this
 
 ```
-python.exe .\setup.py .\build.sh --inplace
+python.exe .\setup.py build_ext --inplace
 ```
 
 ## Data
