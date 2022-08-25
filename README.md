@@ -65,6 +65,12 @@ Finally install the necessary packages
 pip install -r requirements.txt
 ```
 
+Finally compile the cython code
+
+```
+python.exe .\setup.py .\build.sh --inplace
+```
+
 ## Data
 
 ```
