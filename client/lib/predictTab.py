@@ -43,8 +43,9 @@ class PredictTab:
         self.turnLeft = tk.StringVar(master.rootWindow)
         self.turnRight = tk.StringVar(master.rootWindow)
         self.connectText = tk.StringVar(master.rootWindow)
+        self.pauseText = tk.StringVar(master.rootWindow)
         self.keyMap = {}
-        self.stop = False
+        self.move = multiprocessing.Value('i', 0)
 
         self.selectedModel = tk.StringVar(master.rootWindow)
         self.modelList = ['CNN']
@@ -65,7 +66,9 @@ class PredictTab:
         self.modelDropDown = tk.OptionMenu(tabs.tab1, self.selectedModel, *self.modelList)
 
         self.modelBrowseButton = tk.Button(tabs.tab1, text="Browse", command=self.modelBrowse)
-        self.moveButton = tk.Button(tabs.tab1, text="Move", command=self.move)
+        self.moveButton = tk.Button(tabs.tab1, text="Move", command=self.moveCar)
+        self.pauseText.set("Pause")
+        self.stopButton = tk.Button(tabs.tab1, textvariable=self.pauseText, command=self.stop)
         self.connectText.set("Connect")
         self.connectButton = tk.Button(tabs.tab1, textvariable=self.connectText,
                                        command=partial(self.connect))
@@ -84,7 +87,8 @@ class PredictTab:
         self.modelSelect.place(x=placement - 60, y=275, anchor=tk.E)
         self.modelDropDown.place(x=placement + 20, y=275, anchor=tk.E)
         self.modelBrowseButton.place(x=placement + 35, y=275, anchor=tk.W)
-        self.moveButton.place(x=placement, y=340, anchor=tk.CENTER)
+        self.moveButton.place(x=placement + 50, y=340, anchor=tk.CENTER)
+        self.stopButton.place(x=placement - 50, y=340, anchor=tk.CENTER)
 
     def connect(self):
         self.mainWindow = self.rootClass
@@ -120,24 +124,24 @@ class PredictTab:
                     carObjectDetect.getPrediction()
                     self.objResults.value = carObjectDetect.filterResults(im)
 
-            if self.imageCount.value >= 12:
-                if os.path.exists('image.jpg'):
-                    im = Image.open(r"image.jpg")
+            if self.move.value == 1:
+                self.gotPrediction.value = 0
+            else:
+                if self.imageCount.value >= 12:
+                    if os.path.exists('image.jpg'):
+                        im = Image.open(r"image.jpg")
 
-                if self.gotPrediction.value == 0:
-                    if not self.stop:
+                    if self.gotPrediction.value == 0:
                         result = self.ourModel.makePrediction(im)
                         self.results.value = str.encode(result)
 
                         if self.rootClass.debug.get():
                             self.rootClass.debugWindow.logText(LogInfo.debug.value,
-                                                               "Got prediction {}".format(self.ourModel.results[0]))
+                                                               "Got prediction {}".format(self.results.value))
 
-                        print(self.results.value)
-
-                    self.gotPrediction.value = 1
-                    self.imageCount.value = 0
-                    os.remove('image.jpg')
+                        self.gotPrediction.value = 1
+                        self.imageCount.value = 0
+                        os.remove('image.jpg')
 
     def modelBrowse(self):
         filetypes = (
@@ -152,11 +156,20 @@ class PredictTab:
                 if self.rootClass.debug.get():
                     self.rootClass.debugWindow.logText(LogInfo.debug.value, "Found CNN Model")
 
-    def move(self):
+    def stop(self):
+        if self.move.value == 0:
+            self.move.value = 1
+            self.pauseText.set("Continue")
+        else:
+            self.move.value = 0
+            self.pauseText.set("Pause")
+
+    def moveCar(self):
         try:
             self.ts.connectFlag
         except AttributeError:
             messagebox.showerror('Error', 'Connect to the remote car server')
         else:
+            print("starting process")
             ps = multiprocessing.Process(target=self.predictionThread)
             ps.start()

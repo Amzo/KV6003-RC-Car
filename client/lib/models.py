@@ -66,7 +66,7 @@ class CustomModel(tf.keras.callbacks.Callback):
         plt.show()
 
     def makePrediction(self, check_frame=None):
-        class_names = ['a', 'd', 'w', 't']
+        class_names = ['a', 'd', 't', 'w']
         if self.rootWindow.predictTab.selectedModel.get() == "CNN":
             if self.rootWindow.debug.get():
                 self.rootWindow.debugWindow.logText(LogInfo.debug.value, "Getting CNN Prediction")
@@ -234,6 +234,7 @@ class CustomModel(tf.keras.callbacks.Callback):
             self.base_model.trainable = True
 
         x = input_image
+
         x = tf.keras.layers.Cropping2D(cropping=((90, 0), (0, 0)))(x)
         x = RandomBrightness(factor=0.2)(x)
         x = RandomFlip(mode="vertical")(x)

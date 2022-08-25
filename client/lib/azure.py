@@ -84,7 +84,6 @@ class CarObjectDetection:
         # to share a list between processes, as multiprocessing wasn't in the original design
         # pickle it and reload it in the other process at the cost of overhead
 
-        print(azurePrediction)
         if azurePrediction:
             if not os.path.exists('filelock'):
                 # lock the file

@@ -150,7 +150,10 @@ class Gui(threading.Thread):
                             self.boxList = boxList
                             self.passed = True
                             self.hash = hash
-                    os.remove('filelock')
+                    try:
+                        os.remove('filelock')
+                    except FileNotFoundError:
+                        pass
 
                 if self.passed or len(self.boxList) > 0:
                     draw = ImageDraw.Draw(self.predFrame)
