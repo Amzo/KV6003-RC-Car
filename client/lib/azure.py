@@ -26,7 +26,7 @@ class CarObjectDetection:
         self.config.read('../config/config.ini')
         self.checkImage = None
 
-        self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": "2f62dc5740494b0bbbe51a4f3deaae3d"})
+        self.__credentials = ApiKeyCredentials(in_headers={"Prediction-key": ""})
         self.__predictor = CustomVisionPredictionClient(endpoint='https://signdetection-prediction.cognitiveservices'
                                                                  '.azure.com/',
                                                         credentials=self.__credentials)
@@ -35,7 +35,7 @@ class CarObjectDetection:
         if os.path.exists('image1.jpg'):
             with open('image1.jpg', mode="rb") as test_data:
                 try:
-                    self.results = self.__predictor.detect_image('85177bf1-b325-4299-868e-e45f80a62bc4',
+                    self.results = self.__predictor.detect_image('',
                                                                  'Iteration9',
                                                                  test_data)
                 except CustomVisionErrorException:
